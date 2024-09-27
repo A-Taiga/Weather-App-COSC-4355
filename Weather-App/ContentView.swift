@@ -10,12 +10,27 @@ import SwiftData
 
 struct ContentView: View {
     
+    @StateObject var search = Search()
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
 
     var body: some View {
-        ZStack {
-            
+        NavigationStack {
+            List {
+            }
+            .listStyle(.plain)
+            .searchable(text: $search.searchableText, placement: .navigationBarDrawer(displayMode: .always)) {
+                ForEach(search.results, id: \.self) { location in
+                    Button {
+                        
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(location.title)
+                            Text(location.subtitle)
+                        }
+                    }.buttonStyle(.plain)
+                }
+            }
         }
     }
 }
