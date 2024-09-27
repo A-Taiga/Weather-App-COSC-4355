@@ -15,6 +15,7 @@ struct AddressResult: Identifiable, Hashable {
 }
 
 
+
 class Search: NSObject, ObservableObject {
     @Published private(set) var results: Array<AddressResult> = []
     @Published var searchableText = "" {

@@ -6,7 +6,7 @@
 //
 
 import Foundation
-
+import CoreLocation
 
 func readJSONFile<T: Decodable>(with url: URL) throws -> T {
     let data = try Data(contentsOf: url)
@@ -20,4 +20,19 @@ func readUserFromBundle(fileName: String)  -> WeatherData? {
         return nil
     }
     return try? readJSONFile(with: url)
+}
+
+func getCoordinateFrom(address: String, completion: @escaping(_ coordinate: CLLocationCoordinate2D?, _ error: Error?) -> () ) {
+    CLGeocoder().geocodeAddressString(address) { completion($0?.first?.location?.coordinate, $1) }
+}
+
+func fetchData (lat: Double, lon: Double, completion: @escaping(_ data: WeatherData?)  -> () ) async {
+    do {
+//        let env = ProcessInfo.processInfo.environment
+        let url = URL(string: "https://api.pirateweather.net/forecast/KR77TVkdd6jUJnglzGQTeT84WOP07CsN/\(lat),\(lon)?version=2")
+        let (data, _) = try await URLSession.shared.data (from: url!)
+        completion(try JSONDecoder().decode(WeatherData.self, from: data))
+    } catch {
+        print (error)
+    }
 }
