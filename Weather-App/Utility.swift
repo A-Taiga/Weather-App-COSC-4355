@@ -13,7 +13,6 @@ func readJSONFile<T: Decodable>(with url: URL) throws -> T {
     return try JSONDecoder().decode(T.self, from: data)
 }
 
-
 func readUserFromBundle(fileName: String)  -> WeatherData? {
     guard let url = Bundle.main.url(forResource:  fileName, withExtension: "json") else {
         print("ERROR")
@@ -35,4 +34,14 @@ func fetchData (lat: Double, lon: Double, completion: @escaping(_ data: WeatherD
     } catch {
         print (error)
     }
+}
+
+func unixToTime(_ time: Int32, format: String, timeZone: String? = nil) -> String {
+    let date = Date(timeIntervalSince1970: TimeInterval(time))
+    let dateFormatter = DateFormatter()
+    if let zone = timeZone {
+        dateFormatter.timeZone = TimeZone(identifier: zone)
+    }
+    dateFormatter.dateFormat = format
+    return dateFormatter.string(from: date)
 }

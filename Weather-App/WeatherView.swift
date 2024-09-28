@@ -18,7 +18,7 @@ struct WeatherView: View {
     }
     
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             VStack(alignment: .center) {
                 Text(viewModel.title?.split(separator: ",")[0] ?? "--")
                     .font(.title)
@@ -32,11 +32,29 @@ struct WeatherView: View {
                 (Text("H: \(Int(weatherData?.daily.data[1].temperatureLow ?? 0))°") +
                 Text(" L: \(Int(weatherData?.daily.data[1].temperatureHigh ?? 0))°"))
                 .font(.system(size: 25))
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .frame(height: 200)
+                        .opacity(0.1)
+                        .blur(radius: 1)
+                        .scaledToFill()
+                    HourlyView(weatherData: $weatherData)
+                }
+                .padding()
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .opacity(0.1)
+                        .blur(radius: 1)
+                        .scaledToFill()
+                    WeeklyView(weatherData: $weatherData)
+                }
+                .padding()
             }
         }
         .frame(maxWidth: .infinity)
-        .background(LinearGradient(gradient: Gradient(colors: [Color("storm2"), Color("storm3")]), startPoint: .bottom, endPoint: .top))
-        .ignoresSafeArea()
+        .background(LinearGradient(gradient: Gradient(colors: [Color("storm2"), Color("storm3")]), startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }
 
