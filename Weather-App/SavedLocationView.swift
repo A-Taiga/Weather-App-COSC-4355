@@ -8,98 +8,69 @@
 import SwiftUI
 
 struct SavedLocationView: View {
-    @Binding var weatherData: WeatherData?
-    var viewModel = ViewModel()
-    let title: String
-    let subtitle: String
     
-    init(weatherData: Binding<WeatherData?>, title: String, subtitle: String) {
-        self._weatherData = weatherData
-        self.title = title
-        self.subtitle = subtitle
+    @State var location: Location
+    @State var address: AddressResult?
+    @State var style = Style()
+    
+    init(location: Location) {
+        self.location = location
+        self.address = AddressResult(title: location.title, subtitle: location.subtitle)
     }
-    
+   
     var body: some View {
-        Group {
-            HStack(alignment: .top) {
-                VStack {
-                    Text(title)
-                        .font(.title2)
-                }
-                Spacer()
-                if let data = weatherData {
-                    VStack(alignment: .trailing) {
-                        HStack {
-                            getSymbol(icon: data.currently.icon)
-                                .scaledToFit()
+        ZStack {
+            if let d = location.weatherData {
+                HStack(alignment: .top) {
+                    VStack {
+                        Text(location.title)
+                            .font(.title2)
+                    }
+                    Spacer()
+                    if let data = location.weatherData {
+                        VStack(alignment: .trailing) {
+                            HStack {
+                                getSymbol(icon: data.currently.icon)
+                                    .scaledToFit()
                                 Text("\(Int(data.currently.temperature))°")
-                                .font(.title)
+                                    .font(.title)
+                            }
+                            Text("H: \(Int(data.daily.data[1].temperatureHigh))") +
+                            Text(" L: \(Int(data.daily.data[1].temperatureLow))")
                         }
-                        Text("H: \(Int(data.daily.data[1].temperatureHigh))") +
-                        Text(" L: \(Int(data.daily.data[1].temperatureLow))")
                     }
                 }
+                .onAppear() {
+                    style.setFont(icon: d.currently.icon)
+                    style.setBackground(icon: d.currently.icon)
+                }
+                
+                NavigationLink (destination: WeatherView(weatherData: $location.weatherData, title: location.title)) {
+                    EmptyView()
+                }.opacity(0)
             }
         }
+        .shadow(radius: 10)
+        .foregroundStyle(style.fontColor)
         .padding()
-        .background(
-            LinearGradient(gradient: viewModel.weatherBackground(icon: weatherData?.currently.icon ?? ""),
-                           startPoint: .bottom,
-                           endPoint: .top))
-
+        .background(LinearGradient(gradient: style.bgColor, startPoint: .leading, endPoint: .trailing))
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
-
-
-extension SavedLocationView {
-    class ViewModel {
-        
-        func weatherBackground (icon: String) -> Gradient {
-            switch (icon) {
-            case "clear-day":   Gradient(colors: [Color("clear2"), Color("storm2")])
-                //                case "clear-night":
-            case "rain":        Gradient(colors: [Color("storm2"), Color("storm3")])
-                //                case "snow":
-                //                case "sleet":
-                //                case "wind":
-                //                case "fog":
-                //                case "cloudy":
-            case "partly-cloudy-day": Gradient(colors: [Color("clear2"), Color("storm2")])
-                //                case "partly-cloudy-night":
-            default: Gradient(colors:[.black])
-            }
-        }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #Preview {
     struct Preview: View {
-        @State var data: WeatherData?
+        @State var weatherData: WeatherData?
+        @State var location = Location(title: "Houston, TX", subtitle: "Texas, United States", lat: 0.0, lon: 0.0, weatherData: nil)
         var body: some View {
-            SavedLocationView(weatherData: $data, title: "Jefferson City, MO", subtitle: "Missouri, United States")
-                .font(.system(size: 15))
-                .frame(height: 100)
-                .padding()
-                .task {
-                    data = readUserFromBundle(fileName: "JeffersonCity")
-                }
+            NavigationStack {
+                SavedLocationView(location: location)
+                    .padding()
+                    .frame(height: 150)
+                    .task {
+                        location.weatherData = readUserFromBundle(fileName: "Houston")
+                    }
+            }
         }
     }
     return Preview()

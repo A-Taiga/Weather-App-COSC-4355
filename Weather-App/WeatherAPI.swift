@@ -8,7 +8,13 @@
 import Foundation
 import SwiftUI
 
-struct WeatherData: Codable, Identifiable {
+
+
+struct WeatherData: Codable, Identifiable, Equatable{
+    static func == (lhs: WeatherData, rhs: WeatherData) -> Bool {
+        lhs.id == rhs.id
+    }
+    
     let id = UUID()
     let latitude: Double
     let longitude: Double

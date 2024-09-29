@@ -9,44 +9,14 @@ import SwiftUI
 import Charts
 
 
-struct HourlyView: View{
-
+struct HourlyView: View {
+    
+    @Environment(Style.self) var style
     @Binding var weatherData: WeatherData?
 
     var body: some View {
         ZStack {
-            if let weatherData = weatherData {
-                Chart {
-                    ForEach(weatherData.hourly.data[0...23], id: \.self) { hour in
-                        PointMark (
-                            x: .value("", unixToTime(hour.time, format: "ha")),
-                            y: .value("", hour.temperature)
-                        )
-                        .foregroundStyle(.black)
-                        .annotation(position: .top, alignment: .center) {
-                            Text("\(Int(hour.temperature))")
-                            
-                        }
-                        LineMark (
-                            x: .value("", unixToTime(hour.time, format: "ha")),
-                            y: .value("", hour.temperature)
-                        ).foregroundStyle(.black)
-                    }
-                }
-                .chartScrollableAxes(.horizontal)
-                .chartYAxis(.hidden)
-                .chartYScale(domain: yDomain())
-                .chartXVisibleDomain(length: 6)
-                .chartXAxis {
-                    AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
-                        AxisValueLabel(anchor: .top)
-                    }
-                    AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
-                        AxisValueLabel() {chartXLabels(index: value.index)}
-                    }
-                }
-            }
+            chart()
         }
         .padding()
     }
@@ -73,6 +43,46 @@ struct HourlyView: View{
             }
         }
     }
+    
+    @ViewBuilder
+    func chart () -> some View {
+        
+        if let weatherData = weatherData {
+            Chart {
+                ForEach(weatherData.hourly.data[0...23], id: \.self) { hour in
+                    PointMark (
+                        x: .value("", unixToTime(hour.time, format: "ha")),
+                        y: .value("", hour.temperature)
+                    )
+                    .foregroundStyle(style.fontColor)
+                    .annotation(position: .top, alignment: .center) {
+                        Text("\(Int(hour.temperature))°")
+                            .foregroundStyle(style.fontColor)
+                    }
+                    LineMark (
+                        x: .value("", unixToTime(hour.time, format: "ha")),
+                        y: .value("", hour.temperature)
+                    )
+                    .foregroundStyle(style.fontColor)
+                }
+            }
+            .chartScrollableAxes(.horizontal)
+            .chartYAxis(.hidden)
+            .chartYScale(domain: yDomain())
+            .chartXVisibleDomain(length: 6)
+            .chartXAxis {
+                AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
+                        .foregroundStyle(style.fontColor)
+                    AxisValueLabel(anchor: .top)
+                        .foregroundStyle(style.fontColor)
+                }
+                AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
+                    AxisValueLabel() {chartXLabels(index: value.index)}
+                }
+            }
+        }
+    }
 }
 
 #Preview {
@@ -80,6 +90,7 @@ struct HourlyView: View{
         @State var weatherData: WeatherData?
         var body: some View {
             HourlyView(weatherData: $weatherData)
+                .environment(Style())
                 .frame(height: 250)
                 .padding()
                 .task {

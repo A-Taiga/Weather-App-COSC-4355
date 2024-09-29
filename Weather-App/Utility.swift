@@ -45,3 +45,20 @@ func unixToTime(_ time: Int32, format: String, timeZone: String? = nil) -> Strin
     dateFormatter.dateFormat = format
     return dateFormatter.string(from: date)
 }
+
+
+func setFont(icon: String, style: inout Style) {
+    switch (icon) {
+    case "clear-day":           style.fontColor = .black
+    case "clear-night":         style.fontColor = .white
+    case "rain":                style.fontColor = .white
+    case "cloudy":              style.fontColor = .black
+    case "partly-cloudy-day":   style.fontColor = .black
+//            case "partly-cloudy-night":
+//            case "snow":
+//            case "sleet":
+//            case "wind":
+//            case "fog":
+    default:                  style.fontColor = .red
+    }
+}
