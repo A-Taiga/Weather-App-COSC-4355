@@ -9,14 +9,22 @@ import SwiftUI
 import SwiftData
 
 
+enum TempUnits: Hashable {
+    case fahrenheit
+    case celsius
+}
 
+
+@Observable
+class Units {
+    var temp: TempUnits = .fahrenheit
+}
 
 
 extension ContentView {
     
-    
     @Observable
-    class Test {
+    class ViewModel {
         var currentSelection: AddressResult?
         var currentData: WeatherData? = nil
         var present = false
@@ -24,6 +32,9 @@ extension ContentView {
         var showCancelButton = false
         var showPlaceholder = true
         var blurEnabled = false
+        var isEditing: EditMode = .inactive
+        var units = Units()
+        
         func dissmissSheet() {
             currentData = nil
             currentSelection = nil
@@ -48,10 +59,10 @@ extension ContentView {
 }
 
 struct ContentView: View {
-
     @Environment(\.modelContext)  var modelContext
+    @Environment(\.editMode) var editMode
     @Query  var locations: [Location]
-    @State var viewModel = Test()
+    @State var viewModel = ViewModel()
     @StateObject  var search = Search()
     @FocusState  var searchFocused: Bool
     var body: some View {
@@ -171,7 +182,6 @@ struct ContentView: View {
                                                      lon: selection.longitude!,
                                                      weatherData: viewModel.currentData))
                     }
-                    
                     search.text = ""
                     viewModel.present = false
                 }
@@ -187,13 +197,34 @@ struct ContentView: View {
             ForEach(locations, id: \.self) { location in
                 SavedLocationView(location: location)
                     .listRowBackground(Color(UIColor.secondarySystemGroupedBackground).opacity(0))
-                .listRowSeparator(.hidden)
-                .font(.system(size: 15))
-                .frame(height: 100)
+                    .listRowSeparator(.hidden)
+                    .font(.system(size: 15))
+                    .frame(height: 100)
+            }.onDelete {set in
+                _ = set.map{
+                    modelContext.delete(locations[$0])
+                }
             }
         }
+        .environment(\.editMode, $viewModel.isEditing)
         .listStyle(.plain)
-       
+        .toolbar {
+            if viewModel.isEditing == .active {
+                Button("Done") {withAnimation {viewModel.isEditing = .inactive}}
+            } else {
+                Menu {
+                    Button("Edit", action: {withAnimation {self.viewModel.isEditing = .active}})
+                    Picker(selection: $viewModel.units.temp) {
+                        Text("Fahrenheit").tag(TempUnits.fahrenheit)
+                        Text("Celsius").tag(TempUnits.celsius)
+                    } label: {
+                        
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle.fill")
+                }
+            }
+        }
     }
 }
 

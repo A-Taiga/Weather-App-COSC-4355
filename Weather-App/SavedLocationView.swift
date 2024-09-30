@@ -35,14 +35,15 @@ struct SavedLocationView: View {
                                 Text("\(Int(data.currently.temperature))°")
                                     .font(.title)
                             }
-                            Text("H: \(Int(data.daily.data[1].temperatureHigh))") +
-                            Text(" L: \(Int(data.daily.data[1].temperatureLow))")
+                            Text("L: \(Int(data.daily.data[1].temperatureHigh))") +
+                            Text(" H: \(Int(data.daily.data[1].temperatureLow))")
                         }
                     }
                 }
                 .onAppear() {
                     style.setFont(icon: d.currently.icon)
                     style.setBackground(icon: d.currently.icon)
+
                 }
                 
                 NavigationLink (destination: WeatherView(weatherData: $location.weatherData, title: location.title)) {

@@ -9,8 +9,9 @@ import SwiftUI
 
 
 extension WeatherView {
-    @Observable
     class ViewModel {
+        let tileWidth: CGFloat = 170
+        let tileHeight: CGFloat = 170
     }
 }
 
@@ -30,8 +31,12 @@ struct WeatherView: View {
     var body: some View {
         
         ScrollView(showsIndicators: false) {
-            if let _ = weatherData {
+            if let data = weatherData {
+               
+            
                 LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                   
+                    
                     
                     Text(title.split(separator: ",")[0])
                         .font(.title)
@@ -53,8 +58,19 @@ struct WeatherView: View {
                     
                     hourly()
                     daily()
+                    Spacer()
                     
-                    
+                    HStack {
+                        tile(title: "Humidity",
+                             value: "\(Int(data.currently.humidity * 100))%",
+                             icon: Image(systemName: "humidity.fill").foregroundStyle(.blue,.white))
+                        Spacer()
+                        tile(title: "Feels Like",
+                             value: "\(Int(data.currently.feelsLike)) °F",
+                             icon: Image(systemName: "thermometer.medium").foregroundStyle(.red,.white))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    wind()
                 }
                 .onAppear() {
                     guard let icon = weatherData?.currently.icon else {return}
@@ -70,6 +86,126 @@ struct WeatherView: View {
                 gradient: style.bgColor, startPoint: .topLeading, endPoint: .bottomTrailing
             )
         )
+    }
+    
+    @ViewBuilder
+    func wind() -> some View {
+        
+        if let data = weatherData?.currently {
+            let a = {
+                switch (data.windBearing) {
+                case 0: "N"
+                case 90: "E"
+                case 180: "S"
+                case 270: "W"
+                case 0...22.5:  "N"
+                case 22.5...67.5:   "NE"
+                case 67.5...112.5:  "E"
+                case 112.5...157.5: "SE"
+                case 157.5...202.5: "S"
+                case 202.5...247.5: "SW"
+                case 247.5...292.5: "W"
+                case 292.5...337.5: "NW"
+                default: ""
+                }
+            }()
+            
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .opacity(0.1)
+                    .blur(radius: 1)
+                HStack {
+                    VStack {
+                    HStack {
+                        Image(systemName: "wind")
+                        Text("Wind")
+                        Spacer()
+                    }
+                    .padding([.top,.leading])
+                        Spacer()
+                        HStack {
+                            VStack(alignment: .leading) {
+                                HStack {
+                                    Text("Speed")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("\(Int(data.windSpeed.rounded())) mph")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                }
+                                Divider().overlay{style.fontColor}
+                                HStack {
+                                    Text("Gusts")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("\(Int(data.windGust.rounded())) mph")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                Divider().overlay{style.fontColor}
+                                HStack {
+                                    Text("Direction")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("\(Int(data.windBearing))° \(a)")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
+                        }
+                    }
+                    .padding([.leading, .bottom])
+
+                        ZStack {
+                            ForEach(1...120, id: \.self) { index in
+                                Rectangle()
+                                    .frame(width: 1, height: 10)
+                                    .padding(.bottom, 120)
+                                    .opacity(((index % 30) != 0) ? 0.5 : 1)
+                                    .rotationEffect(Angle(degrees: Double(index) * 3))
+                            }
+                            Text("N")
+                                .padding(.bottom, 160)
+                            Text("S")
+                                .padding(.top, 160)
+                            Text("E")
+                                .padding(.leading, 160)
+                            Text("W")
+                                .padding(.trailing, 160)
+                            
+                            Rectangle()
+                                .frame(width: 3, height: 100)
+                                .overlay(alignment: .top) {
+                                    Image(systemName: "location.north.fill")
+                                        .frame(width: 10, height: 10)
+                                        .foregroundStyle(.white)
+                                }
+                                .rotationEffect(Angle(degrees: data.windBearing))
+                        }
+                        .frame(minWidth: 180, maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .padding()
+        }
+    }
+    
+    @ViewBuilder
+    func tile(title: String, value: String, icon: some View) -> some View {
+    
+        RoundedRectangle(cornerRadius: 10)
+            .opacity(0.1)
+            .blur(radius: 1)
+            .overlay {
+                VStack(alignment: .center) {
+                    HStack {
+                        icon
+                        Text(title)
+                    }
+                    .padding(.top, 10)
+                    Text(value)
+                        .font(.title)
+                        .padding(.top)
+                    Spacer()
+                }
+            }
+            .frame(width: 150, height: 150)
+            .scaledToFill()
+            .padding()
     }
     
     @ViewBuilder
@@ -136,7 +272,7 @@ class Style {
         case "clear-day":         bgColor = Gradient(colors: [Color("clear1"), Color("clear2"), Color("clear3"), Color("clear4")])
         case "clear-night":       bgColor = Gradient(colors: [Color("night1"), Color("night2"), Color("night3"), Color("night4")])
         case "rain":              bgColor = Gradient(colors: [Color("storm1"), Color("storm2"), Color("clear3"), Color("clear4")])
-        case "cloudy":            bgColor = Gradient(colors: [Color("clear3"), Color("clear3"), Color("clear3"), Color("storm4")])
+        case "cloudy":            bgColor = Gradient(colors: [Color("cloudy1"), Color("cloudy2"), Color("cloudy3"), Color("cloudy4")])
         case "partly-cloudy-day": bgColor = Gradient(colors: [Color("stormy1"), Color("storm2"), Color("storm2"), Color("storm1")])
 //            case "partly-cloudy-night":
 //            case "snow":
