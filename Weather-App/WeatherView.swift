@@ -17,9 +17,12 @@ extension WeatherView {
 
 struct WeatherView: View {
     
+    @Environment(Units.self) var units
+    @State var alertPressed = false
     @State var style = Style()
     @State var viewModel = ViewModel()
     @Binding var weatherData: WeatherData?
+    
     
     let title: String
     
@@ -37,12 +40,11 @@ struct WeatherView: View {
                 LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                    
                     
-                    
                     Text(title.split(separator: ",")[0])
                         .font(.title)
                         .padding(.top, 100)
                     
-                    Text("\(Int(weatherData?.currently.temperature ?? 0))")
+                    Text("\(units.handleTemp(val: data.currently.temperature))")
                         .font(.system(size: 60))
                         .padding([.leading, .trailing], 25)
                         .overlay(alignment: .trailing) { Text("°") .font(.system(size: 60))}
@@ -52,12 +54,14 @@ struct WeatherView: View {
                             .font(.system(size: 30))
                     }
                     
-                    (Text("L: \(Int(weatherData?.daily.data[1].temperatureLow ?? 0))°") +
-                     Text(" H: \(Int(weatherData?.daily.data[1].temperatureHigh ?? 0))°"))
+                    (Text("L: \(units.handleTemp(val: data.daily.data[1].temperatureLow))°") +
+                     Text(" H: \(units.handleTemp(val: data.daily.data[1].temperatureHigh))°"))
                     .font(.system(size: 25))
                     
+                    alert()
                     hourly()
                     daily()
+                    
                     Spacer()
                     
                     HStack {
@@ -66,11 +70,12 @@ struct WeatherView: View {
                              icon: Image(systemName: "humidity.fill").foregroundStyle(.blue,.white))
                         Spacer()
                         tile(title: "Feels Like",
-                             value: "\(Int(data.currently.feelsLike)) °F",
+                             value: "\(units.handleTemp(val: data.currently.feelsLike)) \(units.handleUnit(UnitsTemp.self))",
                              icon: Image(systemName: "thermometer.medium").foregroundStyle(.red,.white))
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     wind()
+                    moonPhases()
                 }
                 .onAppear() {
                     guard let icon = weatherData?.currently.icon else {return}
@@ -86,29 +91,96 @@ struct WeatherView: View {
                 gradient: style.bgColor, startPoint: .topLeading, endPoint: .bottomTrailing
             )
         )
+        .sheet(isPresented: $alertPressed, onDismiss: {self.alertPressed = false}) {
+            if let alerts = weatherData?.alerts {
+                AlertView(title: title, alertData: alerts, timeZone: weatherData!.timezone)
+                    .padding(.top)
+            }
+        }
     }
+    @ViewBuilder
+    func moonPhases() -> some View {
+        if let data = weatherData?.daily {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .opacity(0.1)
+                    .blur(radius: 1)
+                
+                VStack(alignment: .leading) {
+                    HStack {
+                        VStack {
+                            
+                            (Text(Image(systemName: "moon.fill")) + Text(" Moon Phase"))
+                            Spacer()
+                            Text(getMoonPhaseName(data: data.data[0].moonPhase))
+                            Spacer()
+                            HStack {
+                                ForEach (data.data, id: \.self) { day in
+                                    VStack {
+                                        Text(unixToTime(day.time, format: "E").prefix(1))
+                                        getMoonPhase(data: day.moonPhase)
+                                    }
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        getMoonPhase(data: data.data[0].moonPhase)
+                            .resizable()
+                            .frame(width: 100, height: 100)
+                            .aspectRatio(contentMode: .fit)
+                            .padding(.trailing)
+                    }
+                }
+                .padding()
+            }
+            .padding()
+        }
+    }
+    
+    @ViewBuilder
+    func alert() -> some View {
+        if let data = weatherData?.alerts {
+            if !data.isEmpty {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .opacity(0.1)
+                        .blur(radius: 1)
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.black, .yellow)
+                            Text(getAlertTitle(title: data[0].title))
+                            if data.count > 1 {
+                                Text("and \(data.count-1) more")
+                                    .font(.subheadline)
+                                    .fontWeight(.light)
+                                    .frame(alignment: .centerFirstTextBaseline)
+                            }
+                        }
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding([.leading, .top])
+                        
+                        Divider().overlay(style.fontColor)
+                        Text(data[0].title)
+                            .padding()
+                    }
+                }
+                .padding()
+                .onTapGesture {
+                    alertPressed = true
+                }
+            }
+        } else {
+            EmptyView()
+        }
+    }
+    
     
     @ViewBuilder
     func wind() -> some View {
         
         if let data = weatherData?.currently {
-            let a = {
-                switch (data.windBearing) {
-                case 0: "N"
-                case 90: "E"
-                case 180: "S"
-                case 270: "W"
-                case 0...22.5:  "N"
-                case 22.5...67.5:   "NE"
-                case 67.5...112.5:  "E"
-                case 112.5...157.5: "SE"
-                case 157.5...202.5: "S"
-                case 202.5...247.5: "SW"
-                case 247.5...292.5: "W"
-                case 292.5...337.5: "NW"
-                default: ""
-                }
-            }()
             
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
@@ -128,7 +200,7 @@ struct WeatherView: View {
                                 HStack {
                                     Text("Speed")
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    Text("\(Int(data.windSpeed.rounded())) mph")
+                                    Text("\(units.handleWind(val: data.windSpeed)) \(units.handleUnit(UnitsSpeed.self))")
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     
                                 }
@@ -136,14 +208,14 @@ struct WeatherView: View {
                                 HStack {
                                     Text("Gusts")
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    Text("\(Int(data.windGust.rounded())) mph")
+                                    Text("\(units.handleWind(val: data.windGust)) \(units.handleUnit(UnitsSpeed.self))")
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 Divider().overlay{style.fontColor}
                                 HStack {
                                     Text("Direction")
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    Text("\(Int(data.windBearing))° \(a)")
+                                    Text("\(Int(data.windBearing))° \(getWindBearing(val: data.windBearing))")
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
@@ -203,7 +275,6 @@ struct WeatherView: View {
                     Spacer()
                 }
             }
-            .frame(width: 150, height: 150)
             .scaledToFill()
             .padding()
     }
@@ -215,13 +286,13 @@ struct WeatherView: View {
                 .frame(height: 250)
                 .opacity(0.1)
                 .blur(radius: 1)
-                .scaledToFill()
             VStack(alignment: .leading) {
                 (Text(Image(systemName: "clock")) + Text(" Hourly Forecast"))
                     .padding([.top, .leading])
                 Divider().overlay(style.fontColor)
                 HourlyView(weatherData: $weatherData)
                     .environment(style)
+                    .environment(units)
             }
         }
         .padding()
@@ -239,11 +310,11 @@ struct WeatherView: View {
                 Divider().overlay(style.fontColor)
                 WeeklyView(weatherData: $weatherData)
                     .environment(style)
+                    .environment(units)
             }
         }
         .padding()
     }
-    
 }
 
 @Observable
@@ -258,7 +329,7 @@ class Style {
         case "rain":                fontColor = .black
         case "cloudy":              fontColor = .black
         case "partly-cloudy-day":   fontColor = .black
-//            case "partly-cloudy-night":
+        case "partly-cloudy-night": fontColor = .white
 //            case "snow":
 //            case "sleet":
 //            case "wind":
@@ -269,12 +340,12 @@ class Style {
     
     func setBackground(icon: String) {
         switch (icon) {
-        case "clear-day":         bgColor = Gradient(colors: [Color("clear1"), Color("clear2"), Color("clear3"), Color("clear4")])
-        case "clear-night":       bgColor = Gradient(colors: [Color("night1"), Color("night2"), Color("night3"), Color("night4")])
-        case "rain":              bgColor = Gradient(colors: [Color("storm1"), Color("storm2"), Color("clear3"), Color("clear4")])
-        case "cloudy":            bgColor = Gradient(colors: [Color("cloudy1"), Color("cloudy2"), Color("cloudy3"), Color("cloudy4")])
-        case "partly-cloudy-day": bgColor = Gradient(colors: [Color("stormy1"), Color("storm2"), Color("storm2"), Color("storm1")])
-//            case "partly-cloudy-night":
+        case "clear-day":           bgColor = Gradient(colors: [Color("clear1"), Color("clear2"), Color("clear3"), Color("clear4")])
+        case "clear-night":         bgColor = Gradient(colors: [Color("night1"), Color("night2"), Color("night3"), Color("night4")])
+        case "rain":                bgColor = Gradient(colors: [Color("storm1"), Color("storm2"), Color("clear3"), Color("clear4")])
+        case "cloudy":              bgColor = Gradient(colors: [Color("cloudy1"), Color("cloudy2"), Color("cloudy3"), Color("cloudy4")])
+        case "partly-cloudy-day":   bgColor = Gradient(colors: [Color("stormy1"), Color("storm2"), Color("storm2"), Color("storm1")])
+        case "partly-cloudy-night": bgColor = Gradient(colors: [Color("night1"), Color("night2"), Color("night3"), Color("night4")])
 //            case "snow":
 //            case "sleet":
 //            case "wind":
@@ -294,6 +365,7 @@ class Style {
                 .task {
                     weatherData = readUserFromBundle(fileName: "Houston")
                 }
+                .environment(Units())
         }
     }
     return Preview()

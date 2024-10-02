@@ -3,4 +3,22 @@
    uuid = "8C10F470-F4BF-4AE9-9EF0-A68AE2576453"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BA4EABE8-15B6-4D7B-81AC-209405235BB7"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../../var/folders/c7/5k9ly8451p5gtcz7mg855wgc0000gn/T/swift-generated-sources/@__swiftmacro_11Weather_App0020AlertViewswift_odAJdfMX69_0_33_02C45F167FCC1492522BC12D9372095ELl7PreviewfMf_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "$s11Weather_App0020AlertViewswift_odAJdfMX69_0_33_02C45F167FCC1492522BC12D9372095ELl7PreviewfMf_15PreviewRegistryfMu_"
+            landmarkType = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

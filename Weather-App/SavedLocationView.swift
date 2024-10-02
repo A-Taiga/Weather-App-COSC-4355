@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SavedLocationView: View {
-    
+    @Environment(Units.self) var units
     @State var location: Location
     @State var address: AddressResult?
     @State var style = Style()
@@ -32,21 +32,23 @@ struct SavedLocationView: View {
                             HStack {
                                 getSymbol(icon: data.currently.icon)
                                     .scaledToFit()
-                                Text("\(Int(data.currently.temperature))°")
+                                Text("\(units.handleTemp(val: data.currently.temperature))°")
                                     .font(.title)
                             }
-                            Text("L: \(Int(data.daily.data[1].temperatureHigh))") +
-                            Text(" H: \(Int(data.daily.data[1].temperatureLow))")
+                            Text("L: \(units.handleTemp(val: data.daily.data[1].temperatureHigh))") +
+                            Text(" H: \(units.handleTemp(val: data.daily.data[1].temperatureLow))")
                         }
                     }
                 }
                 .onAppear() {
                     style.setFont(icon: d.currently.icon)
                     style.setBackground(icon: d.currently.icon)
-
                 }
                 
-                NavigationLink (destination: WeatherView(weatherData: $location.weatherData, title: location.title)) {
+                NavigationLink (destination:
+                                    WeatherView(weatherData: $location.weatherData, title: location.title)
+                                    .environment(units)
+                ) {
                     EmptyView()
                 }.opacity(0)
             }
@@ -66,6 +68,7 @@ struct SavedLocationView: View {
         var body: some View {
             NavigationStack {
                 SavedLocationView(location: location)
+                    .environment(Units())
                     .padding()
                     .frame(height: 150)
                     .task {

@@ -9,64 +9,15 @@ import SwiftUI
 import SwiftData
 
 
-enum TempUnits: Hashable {
-    case fahrenheit
-    case celsius
-}
-
-
-@Observable
-class Units {
-    var temp: TempUnits = .fahrenheit
-}
-
-
-extension ContentView {
-    
-    @Observable
-    class ViewModel {
-        var currentSelection: AddressResult?
-        var currentData: WeatherData? = nil
-        var present = false
-        var textPresent = false
-        var showCancelButton = false
-        var showPlaceholder = true
-        var blurEnabled = false
-        var isEditing: EditMode = .inactive
-        var units = Units()
-        
-        func dissmissSheet() {
-            currentData = nil
-            currentSelection = nil
-        }
-        
-        func searchSelect(location: AddressResult) {
-            getCoordinateFrom(address: location.title) { coordinate, error in
-                guard let coords = coordinate else {print(error ?? ""); return}
-                self.currentSelection = location
-                self.currentSelection?.latitude = coords.latitude
-                self.currentSelection?.longitude = coords.longitude
-                Task {
-                    await fetchData(lat: coordinate?.latitude ?? 0.0,
-                                    lon: coordinate?.longitude ?? 0.0) { data in
-                        self.currentData = data
-                        self.present = true
-                    }
-                }
-            }
-        }
-    }
-}
 
 struct ContentView: View {
+    
     @Environment(\.modelContext)  var modelContext
-    @Environment(\.editMode) var editMode
     @Query  var locations: [Location]
     @State var viewModel = ViewModel()
     @StateObject  var search = Search()
     @FocusState  var searchFocused: Bool
     var body: some View {
-        
         
         NavigationView {
             VStack {
@@ -102,7 +53,27 @@ struct ContentView: View {
         }
         .sheet(isPresented: $viewModel.present, onDismiss: {viewModel.dissmissSheet()}) {
             WeatherView (weatherData: $viewModel.currentData, title: viewModel.currentSelection?.title ?? "")
+                .environment(viewModel.units)
                 .overlay {sheetOverlay()}
+        }
+        .sheet(isPresented: $viewModel.unitsSelectted) {
+            VStack {
+                HStack {
+                    Spacer()
+                        .frame(maxWidth: .infinity)
+                    Text("Units")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                    Button("Done") {
+                        viewModel.unitsSelectted = false
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.plain)
+                    .fontWeight(.bold)
+                }
+                .padding(.top)
+                UnitsView(units: $viewModel.units)
+            }
         }
         .onChange(of: search.text) {
             viewModel.showPlaceholder = search.text.isEmpty ? true : false
@@ -171,7 +142,7 @@ struct ContentView: View {
                 Button ("Cancel"){
                     viewModel.present = false
                     searchFocused = true
-                }
+                }.foregroundStyle(.white).font(.title3).fontWeight(.heavy).shadow(radius: 10)
                 .padding()
                 Spacer()
                 Button ("Add") {
@@ -186,6 +157,7 @@ struct ContentView: View {
                     viewModel.present = false
                 }
                 .padding()
+                .foregroundStyle(.white).font(.title3).fontWeight(.heavy).shadow(radius: 10)
             }
             Spacer()
         }
@@ -196,6 +168,7 @@ struct ContentView: View {
         List {
             ForEach(locations, id: \.self) { location in
                 SavedLocationView(location: location)
+                    .environment(viewModel.units)
                     .listRowBackground(Color(UIColor.secondarySystemGroupedBackground).opacity(0))
                     .listRowSeparator(.hidden)
                     .font(.system(size: 15))
@@ -215,11 +188,10 @@ struct ContentView: View {
                 Menu {
                     Button("Edit", action: {withAnimation {self.viewModel.isEditing = .active}})
                     Picker(selection: $viewModel.units.temp) {
-                        Text("Fahrenheit").tag(TempUnits.fahrenheit)
-                        Text("Celsius").tag(TempUnits.celsius)
-                    } label: {
-                        
-                    }
+                        Text("Fahrenheit").tag(UnitsTemp.fahrenheit)
+                        Text("Celsius").tag(UnitsTemp.celsius)
+                    } label: {}
+                    Button("Units") {viewModel.unitsSelectted = true}
                 } label: {
                     Image(systemName: "ellipsis.circle.fill")
                 }
@@ -228,7 +200,52 @@ struct ContentView: View {
     }
 }
 
+
+extension ContentView {
+    
+    @Observable
+    class ViewModel {
+        
+        var currentSelection: AddressResult?
+        var currentData: WeatherData? = nil
+        var present = false
+        var textPresent = false
+        var showCancelButton = false
+        var showPlaceholder = true
+        var blurEnabled = false
+        var isEditing: EditMode = .inactive
+        var units = Units()
+        var unitsSelectted = false
+        
+        func dissmissSheet() {
+            currentData = nil
+            currentSelection = nil
+        }
+        
+        func searchSelect(location: AddressResult) {
+            getCoordinateFrom(address: location.title) { coordinate, error in
+                guard let coords = coordinate else {print(error ?? ""); return}
+                self.currentSelection = location
+                self.currentSelection?.latitude = coords.latitude
+                self.currentSelection?.longitude = coords.longitude
+                Task {
+                    await fetchData(lat: coordinate?.latitude ?? 0.0,
+                                    lon: coordinate?.longitude ?? 0.0) { data in
+                        self.currentData = data
+                        self.present = true
+                    }
+                }
+            }
+        }
+    }
+}
+
 #Preview {
-    ContentView()
-        .modelContainer(for: Location.self, inMemory: true)
+    struct Preview: View {
+        var body: some View {
+            ContentView()
+                .modelContainer(for: Location.self, inMemory: true)
+        }
+    }
+    return Preview()
 }

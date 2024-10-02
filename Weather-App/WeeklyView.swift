@@ -10,7 +10,7 @@ import SwiftUI
 struct WeeklyView: View {
     
     @Binding var weatherData: WeatherData?
-    
+    @Environment(Units.self) var units
     var body: some View {
         VStack(alignment: .leading) {
             if let weatherData = weatherData {
@@ -32,8 +32,8 @@ struct WeeklyView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             getSymbol(icon: day.icon)
                 .frame(width: 25, height: 25, alignment: .trailing)
-            (Text("L: \(Int(day.temperatureLow))") +
-            Text(" H: \(Int(day.temperatureHigh))"))
+            (Text("L: \(units.handleTemp(val: day.temperatureHigh))") +
+            Text(" H: \(units.handleTemp(val: day.temperatureLow))"))
                 .frame(maxWidth: .infinity)
         }
     }
@@ -50,6 +50,7 @@ struct WeeklyView: View {
                 .task {
                     weatherData = readUserFromBundle(fileName: "NewYorkCity")
                 }
+                .environment(Units())
         }
     }
     return Preview()

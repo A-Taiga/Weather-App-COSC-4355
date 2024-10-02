@@ -12,6 +12,7 @@ import Charts
 struct HourlyView: View {
     
     @Environment(Style.self) var style
+    @Environment(Units.self) var units
     @Binding var weatherData: WeatherData?
 
     var body: some View {
@@ -23,7 +24,7 @@ struct HourlyView: View {
 
     func yDomain () -> ClosedRange<Int> {
         guard let weatherData = weatherData else {return 0...0}
-        return Int(weatherData.daily.data[0].temperatureLow)-50...Int(weatherData.daily.data[0].temperatureHigh)+50
+        return units.handleTemp(val: weatherData.daily.data[0].temperatureLow)-50...units.handleTemp(val: weatherData.daily.data[0].temperatureHigh)+50
     }
     
     @ViewBuilder
@@ -52,16 +53,16 @@ struct HourlyView: View {
                 ForEach(weatherData.hourly.data[0...23], id: \.self) { hour in
                     PointMark (
                         x: .value("", unixToTime(hour.time, format: "ha")),
-                        y: .value("", hour.temperature)
+                        y: .value("", units.handleTemp(val:hour.temperature))
                     )
                     .foregroundStyle(style.fontColor)
                     .annotation(position: .top, alignment: .center) {
-                        Text("\(Int(hour.temperature))°")
+                        Text("\( units.handleTemp(val:hour.temperature))°")
                             .foregroundStyle(style.fontColor)
                     }
                     LineMark (
                         x: .value("", unixToTime(hour.time, format: "ha")),
-                        y: .value("", hour.temperature)
+                        y: .value("",  units.handleTemp(val:hour.temperature))
                     )
                     .foregroundStyle(style.fontColor)
                 }
@@ -91,6 +92,7 @@ struct HourlyView: View {
         var body: some View {
             HourlyView(weatherData: $weatherData)
                 .environment(Style())
+                .environment(Units())
                 .frame(height: 250)
                 .padding()
                 .task {
