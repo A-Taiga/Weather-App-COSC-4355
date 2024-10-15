@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		92562A412CBECD7E00C13DDF /* TinyMoon in Frameworks */ = {isa = PBXBuildFile; productRef = 92562A402CBECD7E00C13DDF /* TinyMoon */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		92606DB72CBDB95F00E101E0 /* Weather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Weather.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				92562A412CBECD7E00C13DDF /* TinyMoon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = Weather;
 			packageProductDependencies = (
+				92562A402CBECD7E00C13DDF /* TinyMoon */,
 			);
 			productName = Weather;
 			productReference = 92606DB72CBDB95F00E101E0 /* Weather.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 92606DAE2CBDB95F00E101E0;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				92562A3F2CBECD7E00C13DDF /* XCRemoteSwiftPackageReference "TinyMoon" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 92606DB82CBDB95F00E101E0 /* Products */;
 			projectDirPath = "";
@@ -324,6 +333,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		92562A3F2CBECD7E00C13DDF /* XCRemoteSwiftPackageReference "TinyMoon" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mannylopez/TinyMoon";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		92562A402CBECD7E00C13DDF /* TinyMoon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 92562A3F2CBECD7E00C13DDF /* XCRemoteSwiftPackageReference "TinyMoon" */;
+			productName = TinyMoon;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 92606DAF2CBDB95F00E101E0 /* Project object */;
 }

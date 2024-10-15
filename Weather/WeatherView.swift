@@ -43,6 +43,10 @@ struct WeatherView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding()
                 .environment(units)
+            MoonPhaseTileView()
+                .foregroundStyle(.black)
+                .padding()
+            
         }
         .background(LinearGradient(gradient: style.bgColor, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
