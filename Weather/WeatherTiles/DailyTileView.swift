@@ -15,26 +15,31 @@ struct DailyTileView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Image(systemName: "calendar")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .symbolRenderingMode(.multicolor)
-                Text("Daily Forecast")
-            }
-            .frame(height: 20)
-            .padding([.top, .leading])
-            Divider()
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .opacity(0.1)
+                .blur(radius: 1)
             VStack(alignment: .leading) {
-                row(model.daily[0], dayName: "Today")
-                    .padding([.top, .bottom], -10)
-                ForEach(model.daily[1..<model.daily.count]) { day in
-                    Divider().overlay(.white)
-                    row(day)
-                        .padding([.top, .bottom], -10)
+                HStack {
+                    Image(systemName: "calendar")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .symbolRenderingMode(.multicolor)
+                    Text("Daily Forecast")
                 }
-            }.padding()
+                .frame(height: 20)
+                .padding([.top, .leading])
+                Divider()
+                VStack(alignment: .leading) {
+                    row(model.daily[0], dayName: "Today")
+                        .padding([.top, .bottom], -10)
+                    ForEach(model.daily[1..<model.daily.count]) { day in
+                        Divider().overlay(.white)
+                        row(day)
+                            .padding([.top, .bottom], -10)
+                    }
+                }
+            }
         }
     }
     
@@ -95,9 +100,6 @@ extension DailyTileView {
             VStack {
                 if let weatherData {
                     DailyTileView(weatherData: weatherData)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                     
                         .padding()
                         .environment(Units())
                 }
