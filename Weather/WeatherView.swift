@@ -24,7 +24,7 @@ struct WeatherView: View {
                     .font(.largeTitle)
                 Text("\(units.handleTemp(val: model.currentTemp)) \(units.handleUnit(UnitsTemp.self))")
                     .font(.largeTitle)
-                Text("\(model.currentWeather)")
+                Text("\(model.currentWeather.capitalized)")
                     .font(.headline)
                 HStack {
                     Text("L: \(units.handleTemp(val: model.currentLow)) H: \(units.handleTemp(val: model.currentHigh))")
@@ -35,7 +35,7 @@ struct WeatherView: View {
             HourlyTileView(weatherData: model.weatherData)
                 .foregroundStyle(.white)
                 .padding()
-                .frame(height: 220)
+                .frame(height: 230)
                 .environment(units)
             DailyTileView(weatherData: model.weatherData)
                 .foregroundStyle(.white)
@@ -84,14 +84,14 @@ extension WeatherView {
                         .environment(Units())
                 }
             }.task {
-//                await fetchData(lat: 42.713, lon: -73.204) { data in
-//                    self.weatherData = data
-//                }
-                do {
-                    weatherData = try readUserFromBundle(fileName: "SomePlace")
-                } catch {
-                    print(error)
+                await fetchData(lat: 42.713, lon: -73.204) { data in
+                    self.weatherData = data
                 }
+//                do {
+//                    weatherData = try readUserFromBundle(fileName: "SomePlace")
+//                } catch {
+//                    print(error)
+//                }
             }
         }
     }
