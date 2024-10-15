@@ -33,10 +33,9 @@ struct WeatherView: View {
             }
     
             HourlyTileView(weatherData: model.weatherData)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .foregroundStyle(.black)
                 .padding()
-                .frame(height: 200)
+                .frame(height: 220)
                 .environment(units)
             DailyTileView(weatherData: model.weatherData)
                 .background(.ultraThinMaterial)

@@ -16,42 +16,48 @@ struct HourlyTileView: View {
     }
     
     var body: some View {
-        
-        VStack(alignment: .leading) {
-            HStack {
-                Image(systemName: "clock")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                Text("Hourly Forecast")
-            }
-            .frame(height: 20)
-            .padding([.top, .leading])
-            Divider()
-            Chart {
-                ForEach(model.hourly) { hour in
-                    PointMark(x: .value("", model.toHourDay(utc: hour.dt)),
-                              y: .value("", units.handleTemp(val: hour.temp)))
-                    .annotation(position: .top, alignment: .center) {
-                        Text("\(units.handleTemp(val: hour.temp))")
-                    }
-                    LineMark(x: .value("", model.toHourDay(utc: hour.dt)),
-                             y: .value("", units.handleTemp(val: hour.temp)))
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .opacity(0.1)
+                .blur(radius: 1)
+            VStack(alignment: .leading) {
+                HStack {
+                    Image(systemName: "clock")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                    Text("Hourly Forecast")
                 }
-            }
-            .chartYAxis(.hidden)
-            .chartYScale(domain: model.minHourlyTemp - 50...model.maxHourlyTemp + 50)
-            .chartScrollableAxes(.horizontal)
-            .chartXVisibleDomain(length: 6)
-            .chartXAxis {
-                AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
-                    AxisValueLabel(anchor: .top) {
-                        Text(model.toHour(utc: model.hourly[value.index].dt))
-                            .font(.headline)
+                .frame(height: 20)
+                .padding([.top, .leading])
+                Divider()
+                Chart {
+                    ForEach(model.hourly) { hour in
+                        PointMark(x: .value("", model.toHourDay(utc: hour.dt)),
+                                  y: .value("", units.handleTemp(val: hour.temp)))
+                        .annotation(position: .top, alignment: .center) {
+                            Text("\(units.handleTemp(val: hour.temp))")
+                        }
+                        LineMark(x: .value("", model.toHourDay(utc: hour.dt)),
+                                 y: .value("", units.handleTemp(val: hour.temp)))
                     }
                 }
-                AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
-                    AxisValueLabel() {gridIcons(value.index)}
+                .chartYAxis(.hidden)
+                .chartYScale(domain: model.minHourlyTemp - 50...model.maxHourlyTemp + 50)
+                .chartScrollableAxes(.horizontal)
+                .chartXVisibleDomain(length: 6)
+                .chartXAxis {
+                    AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
+                        AxisValueLabel(anchor: .top) {
+                            Text(model.toHour(utc: model.hourly[value.index].dt))
+                                .foregroundStyle(.black)
+                                .font(.headline)
+                                .fontWeight(.heavy)
+                        }
+                    }
+                    AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
+                        AxisValueLabel() {gridIcons(value.index)}
+                    }
                 }
             }
         }
@@ -64,12 +70,14 @@ struct HourlyTileView: View {
                     main: model.hourly[index].weather[0].weatherMain,
                     icon: model.hourly[index].weather[0].weatherIcon)
             .frame(width: 30, height: 30)
+            .shadow(radius: 10)
             let set = ["Rain", "Thunderstorms"]
             if set.contains(model.hourly[index].weather[0].weatherMain) {
                 Text("\(units.handlePrecipitation(val: model.hourly[index].pop))")
                     .fontWeight(.heavy)
+                    .foregroundStyle(.black)
             } else {
-                Text("")
+                Text(" ")
             }
         }
     }
@@ -119,9 +127,8 @@ extension HourlyTileView {
             VStack {
                 if let weatherData {
                     HourlyTileView(weatherData: weatherData)
+                        .foregroundStyle(.black)
                         .frame(height: 200)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
                         .padding()
                         .environment(Units())
                 }
