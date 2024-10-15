@@ -16,6 +16,7 @@ struct MoonPhaseTileView: View {
             RoundedRectangle(cornerRadius: 10).fill(.black)
                 .opacity(0.3)
                 .blur(radius: 1)
+            
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     if let phase = model.phases[model.currentPhaseName] {
@@ -27,24 +28,24 @@ struct MoonPhaseTileView: View {
                 }
                 .frame(height: 20)
                 .padding([.top, .bottom, .leading])
-                Divider()
+                Divider().overlay(.primary)
                 HStack {
                     VStack(alignment: .leading) {
                         Text(model.currentMoonName)
                             .frame(maxWidth: .infinity, alignment: .center)
-                        Divider()
+                        Divider().overlay(.primary)
                         HStack {
                             Text("Next Full Moon: ")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text("\(model.nextFullMoon) \(model.nextFullMoon > 1 ? "days" : "day")")
                         }
-                        Divider()
+                        Divider().overlay(.primary)
                         HStack {
                             Text("Next New Moon: ")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text("\(model.nextNewMoon) \(model.nextNewMoon > 1 ? "days" : "day")")
                         }
-                        Divider()
+                        Divider().overlay(.primary)
                         HStack {
                             Spacer()
                             ForEach(1..<8) { day in
@@ -112,6 +113,7 @@ extension MoonPhaseTileView {
     struct Preview: View {
         var body: some View {
             MoonPhaseTileView()
+                .foregroundStyle(.white)
                 .padding()
         }
     }
