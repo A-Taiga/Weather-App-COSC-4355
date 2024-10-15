@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct WeatherView: View {
+    @Environment(Style.self) private var style
     @Environment(Units.self) private var units
     @State private var model: Model
-    
     init(name: String, weatherData: WeatherData) {
         self.model = Model(name: name, weatherData: weatherData)
     }
@@ -35,9 +35,9 @@ struct WeatherView: View {
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding()
-   
                 .environment(units)
         }
+        .background(LinearGradient(gradient: style.bgColor, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }
 
@@ -45,12 +45,14 @@ struct WeatherView: View {
 extension WeatherView {
     @Observable
     class Model {
+        
         let name: String
         let weatherData: WeatherData
         let currentTemp: Double
         let currentWeather: String
         let currentLow: Double
         let currentHigh: Double
+        
         init(name: String, weatherData: WeatherData) {
             self.name = name
             self.weatherData = weatherData
@@ -65,10 +67,12 @@ extension WeatherView {
 #Preview {
     struct Preview: View {
         @State var weatherData: WeatherData?
+        @State var style = Style()
         var body: some View {
             VStack {
                 if let weatherData {
                     WeatherView(name: "Some Place", weatherData: weatherData)
+                        .environment(style)
                         .environment(Units())
                 }
             }.task {
