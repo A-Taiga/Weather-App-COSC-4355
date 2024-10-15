@@ -16,31 +16,43 @@ struct HourlyTileView: View {
     }
     
     var body: some View {
-        Chart {
-            ForEach(model.hourly) { hour in
-                PointMark(x: .value("", model.toHourDay(utc: hour.dt)),
-                          y: .value("", units.handleTemp(val: hour.temp)))
-                .annotation(position: .top, alignment: .center) {
-                    Text("\(units.handleTemp(val: hour.temp))")
-                }
-                LineMark(x: .value("", model.toHourDay(utc: hour.dt)),
-                          y: .value("", units.handleTemp(val: hour.temp)))
+        
+        VStack(alignment: .leading) {
+            HStack {
+                Image(systemName: "clock")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                Text("Hourly Forecast")
             }
-        }
-        .chartYAxis(.hidden)
-        .chartYScale(domain: model.minHourlyTemp - 50...model.maxHourlyTemp + 50)
-        .chartScrollableAxes(.horizontal)
-        .chartXVisibleDomain(length: 6)
-        .chartXAxis {
-            AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
-                AxisValueLabel(anchor: .top) {
-                    Text(model.toHour(utc: model.hourly[value.index].dt))
-                        .font(.headline)
+            .frame(height: 20)
+            .padding([.top, .leading])
+            Divider()
+            Chart {
+                ForEach(model.hourly) { hour in
+                    PointMark(x: .value("", model.toHourDay(utc: hour.dt)),
+                              y: .value("", units.handleTemp(val: hour.temp)))
+                    .annotation(position: .top, alignment: .center) {
+                        Text("\(units.handleTemp(val: hour.temp))")
+                    }
+                    LineMark(x: .value("", model.toHourDay(utc: hour.dt)),
+                             y: .value("", units.handleTemp(val: hour.temp)))
                 }
             }
-            AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
-                AxisValueLabel() {gridIcons(value.index)}
+            .chartYAxis(.hidden)
+            .chartYScale(domain: model.minHourlyTemp - 50...model.maxHourlyTemp + 50)
+            .chartScrollableAxes(.horizontal)
+            .chartXVisibleDomain(length: 6)
+            .chartXAxis {
+                AxisMarks(preset: .inset, position: .top, values: .automatic) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2]))
+                    AxisValueLabel(anchor: .top) {
+                        Text(model.toHour(utc: model.hourly[value.index].dt))
+                            .font(.headline)
+                    }
+                }
+                AxisMarks(preset: .inset, position: .bottom, values: .automatic) { value in
+                    AxisValueLabel() {gridIcons(value.index)}
+                }
             }
         }
     }
@@ -115,7 +127,7 @@ extension HourlyTileView {
                 }
             }.task {
                 do {
-                    weatherData = try readUserFromBundle(fileName: "Houston")
+                    weatherData = try readUserFromBundle(fileName: "SomePlace")
                 } catch {
                     print(error)
                 }

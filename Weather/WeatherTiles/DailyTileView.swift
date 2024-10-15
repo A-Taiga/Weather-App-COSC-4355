@@ -16,15 +16,26 @@ struct DailyTileView: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            
-            row(model.daily[0], dayName: "Today")
-                .padding([.top, .bottom], -5)
-            ForEach(model.daily[1..<model.daily.count]) { day in
-                Divider().overlay(.white)
-                row(day)
-                    .padding([.top, .bottom], -5)
+            HStack {
+                Image(systemName: "calendar")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .symbolRenderingMode(.multicolor)
+                Text("Daily Forecast")
             }
-        }.padding()
+            .frame(height: 20)
+            .padding([.top, .leading])
+            Divider()
+            VStack(alignment: .leading) {
+                row(model.daily[0], dayName: "Today")
+                    .padding([.top, .bottom], -10)
+                ForEach(model.daily[1..<model.daily.count]) { day in
+                    Divider().overlay(.white)
+                    row(day)
+                        .padding([.top, .bottom], -10)
+                }
+            }.padding()
+        }
     }
     
     @ViewBuilder
@@ -92,7 +103,7 @@ extension DailyTileView {
                 }
             }.task {
                 do {
-                    weatherData = try readUserFromBundle(fileName: "Houston")
+                    weatherData = try readUserFromBundle(fileName: "SomePlace")
                 } catch {
                     print(error)
                 }

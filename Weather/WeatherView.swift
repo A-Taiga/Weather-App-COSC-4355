@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct WeatherView: View {
+    
     @Environment(Style.self) private var style
     @Environment(Units.self) private var units
     @State private var model: Model
+    
     init(name: String, weatherData: WeatherData) {
         self.model = Model(name: name, weatherData: weatherData)
     }
@@ -29,8 +31,13 @@ struct WeatherView: View {
                         .font(.headline)
                 }
             }
+    
             HourlyTileView(weatherData: model.weatherData)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding()
                 .frame(height: 200)
+                .environment(units)
             DailyTileView(weatherData: model.weatherData)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -57,7 +64,7 @@ extension WeatherView {
             self.name = name
             self.weatherData = weatherData
             self.currentTemp = weatherData.current.temp
-            self.currentWeather = weatherData.current.weather[0].weatherMain
+            self.currentWeather = weatherData.current.weather[0].weatherDescription
             self.currentLow = weatherData.daily[0].temp.min
             self.currentHigh = weatherData.daily[0].temp.max
         }
