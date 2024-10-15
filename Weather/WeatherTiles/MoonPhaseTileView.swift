@@ -52,7 +52,8 @@ struct MoonPhaseTileView: View {
                                 if let date = Calendar.current.date(byAdding: .day, value: day, to: Date.now),
                                    let phase = model.phases[TinyMoon.calculateExactMoonPhase(date).moonPhase] {
                                     VStack {
-                                        Text("\(model.getWeekDay(date: date).prefix(1))")
+//                                        Text("\(model.getWeekDay(date: date).prefix(1))")
+                                        Text("\(date.formatted(.dateTime.weekday(.abbreviated)).prefix(1))")
                                         Image(systemName: phase)
                                     }
                                 }
@@ -69,18 +70,34 @@ struct MoonPhaseTileView: View {
                 }
             }
         }
+        .onTapGesture {model.isPresented = true}
+        .sheet(isPresented: $model.isPresented) {
+            MoonPhaseInfoView(model: model)
+                .apply{$0.presentationBackground(.ultraThinMaterial)}
+                .foregroundStyle(.black)
+                .onAppear{
+                    setWindowBackgroundColor(.black)
+                }
+        }
+    }
+    
+    private func setWindowBackgroundColor(_ color: UIColor) {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+        let window = windowScene.windows.first {
+            window.backgroundColor = color
+        }
     }
 }
 
 extension MoonPhaseTileView {
     @Observable
     class Model {
+        var isPresented = false
         let currentMoonName: String
         let currentPhaseName: TinyMoon.MoonPhase
         let currentMoonEmoji: String
         let nextFullMoon: Int
         let nextNewMoon: Int
-        
         let phases = [
             TinyMoon.MoonPhase.newMoon:          "moonphase.new.moon.inverse",
             TinyMoon.MoonPhase.waxingCrescent:   "moonphase.waxing.crescent.inverse",
@@ -101,10 +118,40 @@ extension MoonPhaseTileView {
             self.nextNewMoon = moon.daysTillNewMoon
         }
         
-        func getWeekDay (date: Date) -> String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE"
-            return formatter.string(from: date)
+        
+        
+        func getMoonPhase(from date: Date) -> String {
+            let moon = TinyMoon.calculateExactMoonPhase(date)
+            guard let phase = phases[moon.moonPhase] else {return ""}
+            return phase
+        }
+        
+        func generateDays (for dateInterval: DateInterval) -> [Date] {
+            generateDates(for: dateInterval,
+                          matching: Calendar.current.dateComponents([.hour, .minute, .second], from: dateInterval.start)
+            )
+        }
+        
+        func generateDates (for dateInterval: DateInterval, matching components: DateComponents) -> [Date] {
+            var dates = [dateInterval.start]
+            Calendar.current.enumerateDates(
+                startingAfter: dateInterval.start,
+                matching: components,
+                matchingPolicy: .nextTime
+            ) { date, error, stop in
+                guard let date = date else {print(error); return}
+                guard date < dateInterval.end else {stop = true; return}
+                dates.append(date)
+            }
+            return dates
+        }
+        
+        func dateRange(for date: Date) -> DateInterval {
+            guard let range = Calendar.dateInterval(Calendar.current)(of: .month, for: date),
+                  let monthFirstWeek = Calendar.dateInterval(Calendar.current)(of: .weekOfMonth, for: range.start),
+                  let monthLastWeek = Calendar.dateInterval(Calendar.current)(of: .weekOfMonth, for: range.end - 1)
+            else {return DateInterval()}
+            return DateInterval(start: monthFirstWeek.start, end: monthLastWeek.end)
         }
     }
 }

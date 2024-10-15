@@ -44,7 +44,6 @@ struct WeatherView: View {
             MoonPhaseTileView()
                 .foregroundStyle(.white)
                 .padding()
-            
         }
         .background(LinearGradient(gradient: style.bgColor, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
