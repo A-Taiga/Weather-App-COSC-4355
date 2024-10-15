@@ -16,8 +16,8 @@ struct DailyTileView: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .opacity(0.1)
+            RoundedRectangle(cornerRadius: 10).fill(.black)
+                .opacity(0.3)
                 .blur(radius: 1)
             VStack(alignment: .leading) {
                 HStack {
@@ -63,6 +63,7 @@ struct DailyTileView: View {
                     main: day.weather[0].weatherMain,
                     icon: day.weather[0].weatherIcon)
             .frame(width: 30, height: 30)
+            .shadow(radius: 10)
             .frame(maxWidth: .infinity)
             (Text("\(units.handleTemp(val: day.temp.min))\(units.handleUnit(UnitsTemp.self))") +
             Text(" -> \(units.handleTemp(val: day.temp.max))\(units.handleUnit(UnitsTemp.self))"))

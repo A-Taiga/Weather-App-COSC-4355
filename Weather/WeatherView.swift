@@ -33,16 +33,16 @@ struct WeatherView: View {
             }
     
             HourlyTileView(weatherData: model.weatherData)
-                .foregroundStyle(.black)
+                .foregroundStyle(.white)
                 .padding()
                 .frame(height: 220)
                 .environment(units)
             DailyTileView(weatherData: model.weatherData)
-                .foregroundStyle(.black)
+                .foregroundStyle(.white)
                 .padding()
                 .environment(units)
             MoonPhaseTileView()
-                .foregroundStyle(.black)
+                .foregroundStyle(.white)
                 .padding()
             
         }

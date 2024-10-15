@@ -13,8 +13,8 @@ struct MoonPhaseTileView: View {
     @State private var model = Model()
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .opacity(0.1)
+            RoundedRectangle(cornerRadius: 10).fill(.black)
+                .opacity(0.3)
                 .blur(radius: 1)
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
