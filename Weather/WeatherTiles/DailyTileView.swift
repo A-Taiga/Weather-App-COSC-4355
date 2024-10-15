@@ -17,8 +17,9 @@ struct DailyTileView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10).fill(.black)
+                .background(.ultraThinMaterial)
                 .opacity(0.3)
-                .blur(radius: 1)
+                
             VStack(alignment: .leading) {
                 HStack {
                     Image(systemName: "calendar")
@@ -29,7 +30,7 @@ struct DailyTileView: View {
                 }
                 .frame(height: 20)
                 .padding([.top, .leading])
-                Divider()
+                Divider().overlay(.primary)
                 VStack(alignment: .leading) {
                     row(model.daily[0], dayName: "Today")
                         .padding([.top, .bottom], -10)

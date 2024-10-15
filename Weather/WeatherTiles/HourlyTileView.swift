@@ -18,8 +18,8 @@ struct HourlyTileView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10).fill(.black)
+                .background(.ultraThinMaterial)
                 .opacity(0.3)
-                .blur(radius: 1)
             VStack(alignment: .leading) {
                 HStack {
                     Image(systemName: "clock")
@@ -29,7 +29,7 @@ struct HourlyTileView: View {
                 }
                 .frame(height: 20)
                 .padding([.top, .leading])
-                Divider()
+                Divider().overlay(.primary)
                 Chart {
                     ForEach(model.hourly) { hour in
                         PointMark(x: .value("", model.toHourDay(utc: hour.dt)),
