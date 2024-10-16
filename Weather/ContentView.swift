@@ -112,7 +112,7 @@ extension ContentView {
         }
         
         func searchFocusedHandler() {
-            withAnimation(.easeInOut(duration: 0.1)) {
+            withAnimation(.easeInOut(duration: 0.3)) {
                 searchListOpacity = searchListOpacity == 0.0 ? 1.0 : 0.0
             }
         }

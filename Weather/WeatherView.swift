@@ -84,14 +84,14 @@ extension WeatherView {
                         .environment(Units())
                 }
             }.task {
-                await fetchData(lat: 42.713, lon: -73.204) { data in
-                    self.weatherData = data
-                }
-//                do {
-//                    weatherData = try readUserFromBundle(fileName: "SomePlace")
-//                } catch {
-//                    print(error)
+//                await fetchData(lat: 42.713, lon: -73.204) { data in
+//                    self.weatherData = data
 //                }
+                do {
+                    weatherData = try readUserFromBundle(fileName: "SomePlace")
+                } catch {
+                    print(error)
+                }
             }
         }
     }
