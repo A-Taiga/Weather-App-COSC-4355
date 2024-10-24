@@ -12,69 +12,67 @@ struct MoonPhaseTileView: View {
     
     @State private var model = Model()
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10).fill(.black)
-                .background(.ultraThinMaterial)
-                .opacity(0.3)
             
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    if let phase = model.phases[model.currentPhaseName] {
-                        Image(systemName:  phase)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    }
-                    Text("Moon Phase")
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                if let phase = model.phases[model.currentPhaseName] {
+                    Image(systemName:  phase)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
                 }
-                .frame(height: 20)
-                .padding([.top, .bottom, .leading])
-                Divider().overlay(.primary)
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(model.currentMoonName)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        Divider().overlay(.primary)
-                        HStack {
-                            Text("Next Full Moon: ")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(model.nextFullMoon) \(model.nextFullMoon > 1 ? "days" : "day")")
-                        }
-                        Divider().overlay(.primary)
-                        HStack {
-                            Text("Next New Moon: ")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(model.nextNewMoon) \(model.nextNewMoon > 1 ? "days" : "day")")
-                        }
-                        Divider().overlay(.primary)
-                        HStack {
-                            Spacer()
-                            ForEach(1..<8) { day in
-                                if let date = Calendar.current.date(byAdding: .day, value: day, to: Date.now),
-                                   let phase = model.phases[TinyMoon.calculateExactMoonPhase(date).moonPhase] {
-                                    VStack {
+                Text("Moon Phase")
+            }
+            .frame(height: 20)
+            .padding([.top, .bottom, .leading])
+            Divider().overlay(.primary)
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(model.currentMoonName)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    Divider().overlay(.primary)
+                    HStack {
+                        Text("Next Full Moon: ")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("\(model.nextFullMoon) \(model.nextFullMoon > 1 ? "days" : "day")")
+                    }
+                    Divider().overlay(.primary)
+                    HStack {
+                        Text("Next New Moon: ")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("\(model.nextNewMoon) \(model.nextNewMoon > 1 ? "days" : "day")")
+                    }
+                    Divider().overlay(.primary)
+                    HStack {
+                        Spacer()
+                        ForEach(1..<8) { day in
+                            if let date = Calendar.current.date(byAdding: .day, value: day, to: Date.now),
+                               let phase = model.phases[TinyMoon.calculateExactMoonPhase(date).moonPhase] {
+                                VStack {
 //                                        Text("\(model.getWeekDay(date: date).prefix(1))")
-                                        Text("\(date.formatted(.dateTime.weekday(.abbreviated)).prefix(1))")
-                                        Image(systemName: phase)
-                                    }
+                                    Text("\(date.formatted(.dateTime.weekday(.abbreviated)).prefix(1))")
+                                    Image(systemName: phase)
                                 }
                             }
-                            Spacer()
                         }
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize()
-                    .padding()
-                    Text(model.currentMoonEmoji)
-                        .font(.system(size: 100))
-                        .padding(.trailing)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize()
+                .padding()
+                Text(model.currentMoonEmoji)
+                    .font(.system(size: 100))
+                    .padding(.trailing)
             }
         }
+        .background(.black.opacity(0.2))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture {model.isPresented = true}
         .sheet(isPresented: $model.isPresented) {
             MoonPhaseInfoView(model: model)
                 .apply{$0.presentationBackground(.ultraThinMaterial)}
-                .foregroundStyle(.black)
+                .foregroundStyle(.white)
                 .onAppear{
                     setWindowBackgroundColor(.black)
                 }

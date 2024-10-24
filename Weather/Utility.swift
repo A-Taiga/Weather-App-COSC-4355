@@ -386,7 +386,6 @@ let cloudsNight = [
 func getIcon(id: Int, main: String, icon: String) -> some View {
     
     var result: String?
-    
     if icon.last == "d" {
         switch main {
         case "Thunderstorm": result = thunderstorm[id]
@@ -396,7 +395,7 @@ func getIcon(id: Int, main: String, icon: String) -> some View {
         case "Atmosphere":   result = atmosphereDay[id]
         case "Clouds":       result = cloudsDay[id]
         case "Clear":        result = "sun.max.fill"
-        default:             result = nil
+        default:             result = ""
         }
         
     } else if icon.last == "n" {
@@ -408,27 +407,23 @@ func getIcon(id: Int, main: String, icon: String) -> some View {
         case "Atmosphere":   result = atmosphereNight[id]
         case "Clouds":       result = cloudsNight[id]
         case "Clear":        result = "moon.stars.fill"
-        default:             result = nil
+        default:             result = ""
         }
     }
-    
-    if let result {
-        return Image(systemName: result).resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
-    } else {
-        return EmptyView()
-    }
+    guard let result else {return Image("").resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)}
+    return Image(systemName: result).resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
 }
 
-//
-//func unixToTime(_ time: Int32, format: String, timeZone: String? = nil) -> String {
-//    let date = Date(timeIntervalSince1970: TimeInterval(time))
-//    let dateFormatter = DateFormatter()
-//    if let zone = timeZone {
-//        dateFormatter.timeZone = TimeZone(identifier: zone)
-//    }
-//    dateFormatter.dateFormat = format
-//    return dateFormatter.string(from: date)
-//}
+
+func unixToTime(_ time: Int32, format: String, timeZone: String? = nil) -> String {
+    let date = Date(timeIntervalSince1970: TimeInterval(time))
+    let dateFormatter = DateFormatter()
+    if let zone = timeZone {
+        dateFormatter.timeZone = TimeZone(identifier: zone)
+    }
+    dateFormatter.dateFormat = format
+    return dateFormatter.string(from: date)
+}
 
 func toTime(utc: TimeInterval, timeZone: String? = nil) -> String {
     let date = Date(timeIntervalSince1970: utc)
@@ -438,6 +433,22 @@ func toTime(utc: TimeInterval, timeZone: String? = nil) -> String {
     }
     dateFormatter.dateFormat = "h:mm a"
     return dateFormatter.string(from: date)
+}
+
+
+
+func adjustedTimeInterval(from timeInterval: TimeInterval, toTimeZoneIdentifier timeZoneIdentifier: String) -> TimeInterval {
+    let date = Date(timeIntervalSinceReferenceDate: timeInterval)
+    guard let timeZone = TimeZone(identifier: timeZoneIdentifier) else {
+        print("Invalid timezone identifier")
+        return timeInterval
+    }
+    let currentOffset = TimeZone.current.secondsFromGMT(for: date)
+    let targetOffset = timeZone.secondsFromGMT(for: date)
+    let offsetDifference = targetOffset - currentOffset
+    let adjustedTimeInterval = timeInterval + TimeInterval(offsetDifference)
+    
+    return adjustedTimeInterval
 }
 
 

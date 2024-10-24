@@ -15,33 +15,30 @@ struct DailyTileView: View {
     }
     
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 10).fill(.black)
-                .background(.ultraThinMaterial)
-                .opacity(0.3)
-                
+        VStack(alignment: .leading) {
+            HStack {
+                Image(systemName: "calendar")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .symbolRenderingMode(.multicolor)
+                Text("Daily Forecast")
+            }
+            .frame(height: 20)
+            .padding([.top, .leading])
+            Divider().overlay(.primary)
             VStack(alignment: .leading) {
-                HStack {
-                    Image(systemName: "calendar")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .symbolRenderingMode(.multicolor)
-                    Text("Daily Forecast")
-                }
-                .frame(height: 20)
-                .padding([.top, .leading])
-                Divider().overlay(.primary)
-                VStack(alignment: .leading) {
-                    row(model.daily[0], dayName: "Today")
+                row(model.daily[0], dayName: "Today")
+                    .padding([.top, .bottom], -10)
+                ForEach(model.daily[1..<model.daily.count]) { day in
+                    Divider().overlay(.white)
+                    row(day)
                         .padding([.top, .bottom], -10)
-                    ForEach(model.daily[1..<model.daily.count]) { day in
-                        Divider().overlay(.white)
-                        row(day)
-                            .padding([.top, .bottom], -10)
-                    }
                 }
             }
         }
+        .background(.black.opacity(0.3))
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
     
     @ViewBuilder

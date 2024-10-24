@@ -56,6 +56,10 @@ struct Current: Codable {
 struct Minutely: Codable {
     let dt: TimeInterval
     let precipitation: Double // only uses mm/h
+    enum CodingKeys: CodingKey {
+        case dt
+        case precipitation
+    }
 }
 
 struct Hourly: Codable, Identifiable{
@@ -95,26 +99,6 @@ struct Hourly: Codable, Identifiable{
         case snow
         case weather
     }
-    
-//    init(from decoder: any Decoder) throws {
-//        let container = try decoder.container(keyedBy: CodingKeys.self)
-//        self.dt = try container.decode(TimeInterval.self, forKey: .dt)
-//        self.temp = try container.decode(Double.self, forKey: .temp)
-//        self.feels_like = try container.decode(Double.self, forKey: .feels_like)
-//        self.pressure = try container.decode(Double.self, forKey: .pressure)
-//        self.humidity = try container.decode(Double.self, forKey: .humidity)
-//        self.dew_point = try container.decode(Double.self, forKey: .dew_point)
-//        self.uvi = try container.decode(Double.self, forKey: .uvi)
-//        self.clouds = try container.decode(Double.self, forKey: .clouds)
-//        self.visibility = try? container.decodeIfPresent(Double.self, forKey: .visibility)
-//        self.wind_speed = try container.decode(Double.self, forKey: .wind_speed)
-//        self.wind_gust = try? container.decodeIfPresent(Double.self, forKey: .wind_gust)
-//        self.wind_deg = try container.decode(Double.self, forKey: .wind_deg)
-//        self.pop = try container.decode(Double.self, forKey: .pop)
-//        self.rain = try? container.decodeIfPresent(Rain.self, forKey: .rain)
-//        self.snow = try? container.decodeIfPresent(Snow.self, forKey: .snow)
-//        self.weather = try container.decode([Weather].self, forKey: .weather)
-//    }
 }
 
 struct Daily: Codable, Identifiable {

@@ -9,9 +9,9 @@ import Foundation
 import SwiftData
 
 @Model
-final class DataModel: Identifiable {
+final class DataModel: Identifiable, Hashable {
     var id = UUID()
-    var name: String
+    @Attribute(.unique) var name: String
     var weatherData: WeatherData
     init(name: String, weatherData: WeatherData) {
         self.name = name

@@ -10,31 +10,106 @@ import SwiftData
 import MapKit
 
 struct ContentView: View {
-    @State private var units = Units()
+    @Environment(\.modelContext) var modelContext
     @State var model = Model()
-    @Environment(\.modelContext) private var modelContext
-    @Query private var savedData: [DataModel]
-    
+    @Query var savedData: [DataModel]
+   
     var body: some View {
         NavigationStack {
             Spacer()
             List {
-                
+                ForEach(savedData, id: \.id) { data in
+                    Section {
+                        SavedLocationView(name: data.name, weatherData: data.weatherData, time: model.currentTime)
+                            .environment(model.units)
+                    }
+                }
+                .onDelete {set in _ = set.map{modelContext.delete(savedData[$0])}}
+                .frame(height: 110)
+                .listRowBackground(Color(.white).opacity(0))
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
             }
+            .environment(\.editMode, $model.editList)
             .overlay {listOverlay}
             .navigationTitle("Weather")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $model.search.text, isPresented: $model.searchFocused, placement: .navigationBarDrawer(displayMode: .always))
+            .searchable(text: $model.search.text,
+                        isPresented: $model.searchFocused,
+                        placement: .navigationBarDrawer(displayMode: .always))
+            .toolbarRole(.editor)
+            .toolbar {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    ZStack {
+                        if model.editList == .inactive {inactiveMenu
+                        } else {activeMenu}
+                    }
+                    .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(Double(model.buttonRotation)))
+                    VStack {}
+                }
+            }
         }
         .preferredColorScheme(.dark)
         .onChange(of: model.searchFocused, {model.searchFocusedHandler()})
         .onChange(of: model.selectionTitle) {Task {await model.getLocationInfo()}}
         .sheet(isPresented: $model.showSelection, onDismiss: {model.dismissSheet()}) {weatherSheet}
+        .sheet(isPresented: $model.showOtherUnits, onDismiss: {model.showOtherUnits = false}) {UnitsView(units: $model.units)}
+        .onReceive(model.timer) {model.currentTime = $0.timeIntervalSince1970}
+        
+        // need to figure out how to update all saved weather data
+//        .onReceive(model.weatherDataTimer) {_ in updateWeatherData()}
+        
+        // change this to check time passed instead for less calls
+//        .onAppear(perform: updateWeatherData)
+        // for debug
+//        .onAppear() {
+//            if let data = try? readUserFromBundle(fileName: "Houston1") {
+//                modelContext.insert(DataModel(name: "Houston", weatherData: data))
+//            }
+//            if let data = try? readUserFromBundle(fileName: "NewYork1") {
+//                modelContext.insert(DataModel(name: "New York", weatherData: data))
+//            }
+//        }
+    }
+
+    
+    
+    var inactiveMenu: some View {
+        Menu {
+            Button("Edit") {
+                withAnimation {
+                    model.editList = .active
+                    model.buttonRotation = 90.0
+                }
+            }
+            Picker(selection: $model.units.temp) {
+                Text("Fahrenheit").tag(UnitsTemp.fahrenheit)
+                Text("Celsius").tag(UnitsTemp.celsius)
+            } label: {}
+            Button("Units") {model.showOtherUnits = true}
+        } label: {
+            Image(systemName: "ellipsis.circle.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+        }
+    }
+
+    var activeMenu: some View {
+        Button {
+            withAnimation {
+                model.editList = .inactive
+                model.buttonRotation = 0
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle.fill")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        }
     }
     
     var listOverlay: some View {
         VStack {
-            Spacer()
             List(model.search.results, id: \.id) { result in
                 Button{
                     model.selectionTitle = result.title
@@ -64,22 +139,27 @@ struct ContentView: View {
                         if let data = self.model.selectedWeatherData {
                             WeatherView(name: location.locality, weatherData: data)
                                 .environment(Style())
-                                .environment(units)
-                        }
-                        HStack {
-                            Button("Cancel") {
-                                model.showSelection = false
-                            }
-                            .font(.title3)
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                                .environment(model.units)
                             
-                            Button("Add") {
-                                model.showSelection = false
+                            HStack {
+                                Button("Cancel") {
+                                    model.showSelection = false
+                                }
+                                .font(.title3)
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                if !savedData.contains(where: {$0.name == location.locality}) {
+                                    Button("Add") {
+                                        modelContext.insert(DataModel(name: location.locality, weatherData: data))
+                                        model.showSelection = false
+                                        model.search.text = ""
+                                        model.searchFocused = false
+                                    }
+                                    .font(.title3)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
                             }
-                            .font(.title3)
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .trailing)
                         }
                     }
                 }
@@ -95,8 +175,23 @@ struct ContentView: View {
 }
 
 extension ContentView {
+    func updateWeatherData() {
+        Task {@MainActor in
+            for index in savedData.indices {
+                await fetchData(lat: savedData[index].weatherData.lat, lon: savedData[index].weatherData.lat) {
+                    if let data = $0 {
+                        savedData[index].weatherData = data
+                    }
+                }
+            }
+        }
+    }
+}
+
+extension ContentView {
     @Observable
     class Model {
+        var units = Units()
         var search = Search()
         var selectionTitle: String?
         var selectedResult: LocationInfo?
@@ -104,6 +199,12 @@ extension ContentView {
         var showSelection = false
         var searchFocused = false
         var searchListOpacity = 0.0
+        var currentTime = Date().timeIntervalSince1970
+        var showOtherUnits = false
+        var editList: EditMode = .inactive
+        var buttonRotation = 0.0
+        let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+//        let weatherDataTimer = Timer.publish(every: 600, on: .main, in: .common).autoconnect()
         
         func dismissSheet() {
             selectionTitle = nil
@@ -116,7 +217,7 @@ extension ContentView {
                 searchListOpacity = searchListOpacity == 0.0 ? 1.0 : 0.0
             }
         }
-        
+
         func getLocationInfo() async {
             guard let selectionTitle else {return}
             getCoords(from: selectionTitle) {
@@ -189,7 +290,6 @@ struct LocationInfo {
         self.subAdministrativeArea = subAdministrativeArea
         self.location = location
     }
-    
 }
 
 
@@ -208,5 +308,5 @@ func getCoords(from address: String, completion: @escaping (_ locality: String,
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: DataModel.self, inMemory: true)
 }
