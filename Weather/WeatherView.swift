@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WeatherView: View {
     
+    @Environment(\.presentationMode) var presentation
     @Environment(Style.self) private var style
     @Environment(Units.self) private var units
     @State private var model = Model()
@@ -20,8 +21,9 @@ struct WeatherView: View {
     let currentLow: Double
     let currentHigh: Double
     let alerts: [Alert]?
+    let isSheet: Bool
 
-    init(name: String, weatherData: WeatherData) {
+    init(name: String, weatherData: WeatherData, isSheet: Bool) {
         self.name = name
         self.weatherData = weatherData
         self.currentTemp = weatherData.current.temp
@@ -29,6 +31,7 @@ struct WeatherView: View {
         self.currentLow = weatherData.daily[0].temp.min
         self.currentHigh = weatherData.daily[0].temp.max
         self.alerts = weatherData.alerts
+        self.isSheet = isSheet
     }
     
     var body: some View {
@@ -41,48 +44,96 @@ struct WeatherView: View {
             }
             .ignoresSafeArea()
             .overlay(.ultraThinMaterial)
-            
-            ScrollView {
-                VStack {
-                    Text(name)
-                        .font(.largeTitle)
-                    Text("\(units.handleTemp(val: currentTemp)) \(units.handleUnit(UnitsTemp.self))")
-                        .font(.largeTitle)
-                    Text("\(currentWeather.capitalized)")
-                        .font(.headline)
-                    HStack {
-                        Text("L: \(units.handleTemp(val: currentLow)) H: \(units.handleTemp(val: currentHigh))")
-                            .font(.headline)
+            VStack(spacing: 0) {
+                ScrollView {
+                    LazyVStack {
+                        VStack {
+                            Text(name)
+                                .font(.largeTitle)
+                            Text("\(units.handleTemp(val: currentTemp)) \(units.handleUnit(UnitsTemp.self))")
+                                .font(.largeTitle)
+                            Text("\(currentWeather.capitalized)")
+                                .font(.headline)
+                            HStack {
+                                Text("L: \(units.handleTemp(val: currentLow)) H: \(units.handleTemp(val: currentHigh))")
+                                    .font(.headline)
+                            }
+                        }
+                        if let _ = alerts {alertTile}
+                        VStack(spacing: 0) {
+                            HStack {
+                                Image(systemName: "clock")
+                                    .symbolRenderingMode(.monochrome)
+                                Text("Hourly Forecast")
+                                    .font(.title3)
+                                Spacer()
+                            }
+                            .padding()
+                            Divider().overlay(.white)
+                            HourlyTileView(weatherData: weatherData)
+                                .foregroundStyle(.white)
+                                .padding()
+                                .environment(units)
+                        }
+                        .frame(height: 250)
+                        .background(.black.opacity(0.3))
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding()
+                        
+                        DailyTileView(weatherData: weatherData)
+                            .foregroundStyle(.white)
+                            .padding()
+                            .environment(units)
+                        WindTileView(weatherData: weatherData)
+                            .foregroundStyle(.white)
+                            .padding()
+                        
+                        MoonPhaseTileView()
+                            .foregroundStyle(.white)
+                            .padding()
                     }
                 }
-                
-                if let _ = alerts {alertTile}
-                
-                HourlyTileView(weatherData: weatherData)
-                    .foregroundStyle(.white)
-                    .padding()
-                    .frame(height: 230)
-                    .environment(units)
-                
-                DailyTileView(weatherData: weatherData)
-                    .foregroundStyle(.white)
-                    .padding()
-                    .environment(units)
-                WindTileView(weatherData: weatherData)
-                    .foregroundStyle(.white)
-                    .padding()
-                
-                MoonPhaseTileView()
-                    .foregroundStyle(.white)
-                    .padding()
+                if !isSheet {
+                    ZStack {
+                        Rectangle().fill(.ultraThinMaterial).frame(height: 80)
+                        HStack {
+                            Button {
+                                model.showSettings = true
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 30, height: 30)
+                            }
+                            .padding(.leading, 50)
+                            Spacer()
+                            Button {
+                                presentation.wrappedValue.dismiss()
+                            } label: {
+                                Image(systemName: "list.bullet")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 30, height: 30)
+                            }.padding(.trailing, 50)
+                        }
+                    }
+                }
+                if isSheet {Spacer()}
             }
+            .ignoresSafeArea(edges: .bottom)
         }
+        .navigationBarBackButtonHidden(true)
         .onAppear(perform: setStyle)
         .sheet(isPresented: $model.alertTap) {
             AlertView(alerts: alerts!,
                       timeZone: weatherData.timezone,
                       didExit: $model.alertTap)
             .preferredColorScheme(.dark)
+        }
+        .sheet(isPresented: $model.showSettings) {
+            @State var u = units
+            UnitsView(units: $u)
         }
     }
 }
@@ -123,6 +174,7 @@ extension WeatherView {
     @Observable
     class Model {
         var alertTap = false
+        var showSettings = false
     }
 }
 
@@ -133,7 +185,7 @@ extension WeatherView {
         var body: some View {
             VStack {
                 if let weatherData {
-                    WeatherView(name: "Gold Hill", weatherData: weatherData)
+                    WeatherView(name: "New York", weatherData: weatherData, isSheet: false)
                         .environment(style)
                         .environment(Units())
                 }
@@ -142,7 +194,7 @@ extension WeatherView {
 //                    self.weatherData = data
 //                }
                 do {
-                    weatherData = try readUserFromBundle(fileName: "GoldHillOR")
+                    weatherData = try readUserFromBundle(fileName: "NewYork1")
                 } catch {
                     print(error)
                 }

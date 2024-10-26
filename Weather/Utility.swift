@@ -383,7 +383,7 @@ let cloudsNight = [
     804: "cloud.fill"
 ]
 
-func getIcon(id: Int, main: String, icon: String) -> some View {
+func getIcon(id: Int, main: String, icon: String) -> Image {
     
     var result: String?
     if icon.last == "d" {
@@ -410,8 +410,8 @@ func getIcon(id: Int, main: String, icon: String) -> some View {
         default:             result = ""
         }
     }
-    guard let result else {return Image("").resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)}
-    return Image(systemName: result).resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
+    guard let result else {return Image("")}
+    return Image(systemName: result)
 }
 
 

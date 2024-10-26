@@ -5,6 +5,18 @@
 //  Created by Anthony Polka on 10/14/24.
 //
 
+
+// todo
+/*
+    figure out how to update all saved weather locations
+    add option to get weather for user location
+    make units changable from WeatherView
+    add charts for some of the tiles when clicked on
+    find a good photo for snow background
+    maybe add drag and drop functionality for saved locations or tiles
+    
+ */
+
 import SwiftUI
 import SwiftData
 import MapKit
@@ -12,24 +24,25 @@ import MapKit
 struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @State var model = Model()
-    @Query var savedData: [DataModel]
-   
+    @Query(sort: \DataModel.listIndex) var savedData: [DataModel]
     var body: some View {
         NavigationStack {
             Spacer()
             List {
-                ForEach(savedData, id: \.id) { data in
-                    Section {
+                ForEach(savedData) { data in
                         SavedLocationView(name: data.name, weatherData: data.weatherData, time: model.currentTime)
                             .environment(model.units)
-                    }
+                    
                 }
-                .onDelete {set in _ = set.map{modelContext.delete(savedData[$0])}}
+                .onMove(perform: move)
+                .onDelete {set in _ = set.map{modelContext.delete(savedData[$0])}; try? modelContext.save()}
                 .frame(height: 110)
                 .listRowBackground(Color(.white).opacity(0))
                 .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowInsets(EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10))
+                
             }
+            .listRowSpacing(30)
             .environment(\.editMode, $model.editList)
             .overlay {listOverlay}
             .navigationTitle("Weather")
@@ -56,24 +69,28 @@ struct ContentView: View {
         .sheet(isPresented: $model.showSelection, onDismiss: {model.dismissSheet()}) {weatherSheet}
         .sheet(isPresented: $model.showOtherUnits, onDismiss: {model.showOtherUnits = false}) {UnitsView(units: $model.units)}
         .onReceive(model.timer) {model.currentTime = $0.timeIntervalSince1970}
-        
-        // need to figure out how to update all saved weather data
-//        .onReceive(model.weatherDataTimer) {_ in updateWeatherData()}
-        
-        // change this to check time passed instead for less calls
-//        .onAppear(perform: updateWeatherData)
         // for debug
-//        .onAppear() {
-//            if let data = try? readUserFromBundle(fileName: "Houston1") {
-//                modelContext.insert(DataModel(name: "Houston", weatherData: data))
-//            }
-//            if let data = try? readUserFromBundle(fileName: "NewYork1") {
-//                modelContext.insert(DataModel(name: "New York", weatherData: data))
-//            }
-//        }
+        .onAppear() {
+            if let data = try? readUserFromBundle(fileName: "GoldHillOR") {
+                modelContext.insert(DataModel(name: "Gold Hill", weatherData: data, listIndex: 0))
+            }
+            if let data = try? readUserFromBundle(fileName: "Houston1") {
+                modelContext.insert(DataModel(name: "Houston", weatherData: data, listIndex: 1))
+            }
+            if let data = try? readUserFromBundle(fileName: "SomePlace") {
+                modelContext.insert(DataModel(name: "Some Place", weatherData: data, listIndex: 2))
+            }
+        }
     }
-
     
+    func move(from source: IndexSet, to destination: Int) {
+        var temp = savedData
+        temp.move(fromOffsets: source, toOffset: destination)
+        for (index, item) in temp.enumerated() {
+            item.listIndex = index
+        }
+        try? modelContext.save()
+    }
     
     var inactiveMenu: some View {
         Menu {
@@ -137,7 +154,7 @@ struct ContentView: View {
                 ZStack {
                     GeometryReader { _ in
                         if let data = self.model.selectedWeatherData {
-                            WeatherView(name: location.locality, weatherData: data)
+                            WeatherView(name: location.locality, weatherData: data, isSheet: true)
                                 .environment(Style())
                                 .environment(model.units)
                             
@@ -150,7 +167,12 @@ struct ContentView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 if !savedData.contains(where: {$0.name == location.locality}) {
                                     Button("Add") {
-                                        modelContext.insert(DataModel(name: location.locality, weatherData: data))
+                                        modelContext.insert(DataModel(name: location.locality,
+                                                                      weatherData: data,
+                                                                      listIndex: savedData.isEmpty ? 0 : savedData.count))
+                                        
+                                        try? modelContext.save()
+                                        
                                         model.showSelection = false
                                         model.search.text = ""
                                         model.searchFocused = false

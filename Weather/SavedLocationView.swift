@@ -9,7 +9,6 @@ import SwiftUI
 
 
 struct SavedLocationView: View {
-    
     @Environment(Units.self) private var units
     @State private var style = Style()
     private let weatherData: WeatherData
@@ -51,7 +50,8 @@ struct SavedLocationView: View {
                 VStack(alignment: .leading) {
                     Text(name)
                         .font(.title)
-                        .minimumScaleFactor(0.1)
+                        .minimumScaleFactor(0.01)
+                        .lineLimit(1)
                     Text("\(toTime(utc: time))")
                     if let _ = weatherData.alerts {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -65,8 +65,11 @@ struct SavedLocationView: View {
                 .padding(.leading)
                 VStack {
                     HStack {
+                        Spacer()
                         getIcon(id: weather.weatherID, main: weather.weatherMain, icon: weather.weatherIcon)
-                            
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .symbolRenderingMode(.multicolor)
                         VStack {
                             Text("\(units.handleTemp(val: currentTemp))\(units.handleUnit(UnitsTemp.self))")
                                 .font(.title)
@@ -75,6 +78,7 @@ struct SavedLocationView: View {
                                 Text("L: \(units.handleTemp(val: high))")
                             }.fixedSize(horizontal: true, vertical: true)
                         }
+                        .minimumScaleFactor(0.01)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -82,11 +86,14 @@ struct SavedLocationView: View {
                 .padding()
             }
             .overlay {
-                NavigationLink(destination: WeatherView(name: name, weatherData: weatherData)
+                NavigationLink(destination: WeatherView(name: name, weatherData: weatherData, isSheet: false)
                     .environment(units)
                     .environment(style)) {
                         Rectangle().fill(.clear)
-                    }.opacity(0)
+//                            .matchedTransitionSource(id: "icon", in: namespace)
+                    }
+                    .navigationBarBackButtonHidden(true)
+                    .opacity(0)
             }
         }
         .foregroundStyle(style.fontColor)

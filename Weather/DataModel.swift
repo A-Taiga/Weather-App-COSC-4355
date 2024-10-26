@@ -12,9 +12,11 @@ import SwiftData
 final class DataModel: Identifiable, Hashable {
     var id = UUID()
     @Attribute(.unique) var name: String
+    var listIndex: Int
     var weatherData: WeatherData
-    init(name: String, weatherData: WeatherData) {
+    init(name: String, weatherData: WeatherData, listIndex: Int) {
         self.name = name
         self.weatherData = weatherData
+        self.listIndex = listIndex
     }
 }

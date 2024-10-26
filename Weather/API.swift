@@ -218,3 +218,17 @@ struct Weather: Codable {
         case weatherIcon = "icon"
     }
 }
+
+
+// for formatting dates to strings
+extension TimeInterval {
+    func formatted(_ format: String, timeZone: String? = nil) -> String {
+        let date = Date(timeIntervalSince1970: self)
+        let dateFormatter = DateFormatter()
+        if let timeZone {
+            dateFormatter.timeZone = TimeZone(identifier: timeZone)
+        }
+        dateFormatter.dateFormat = format
+        return dateFormatter.string(from: date)
+    }
+}

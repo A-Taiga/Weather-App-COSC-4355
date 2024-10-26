@@ -60,6 +60,7 @@ struct DailyTileView: View {
             getIcon(id: day.weather[0].weatherID,
                     main: day.weather[0].weatherMain,
                     icon: day.weather[0].weatherIcon)
+                    .resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
 
             .frame(width: 30, height: 30)
             .shadow(radius: 10)

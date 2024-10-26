@@ -31,7 +31,9 @@ struct MoonPhaseInfoView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 25, height: 25)
+                        .foregroundStyle(.white)
                 }
+                
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding()
 
