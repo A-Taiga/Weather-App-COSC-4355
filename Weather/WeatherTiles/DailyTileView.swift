@@ -9,9 +9,10 @@ import SwiftUI
 
 struct DailyTileView: View {
     @Environment(Units.self) private var units
-    @State private var model: Model
-    init(weatherData: WeatherData) {
-        self.model = Model(weatherData: weatherData)
+    private let daily: [Daily]
+
+    init(daily: [Daily]) {
+        self.daily = daily
     }
     
     var body: some View {
@@ -27,9 +28,9 @@ struct DailyTileView: View {
             .padding([.top, .leading])
             Divider().overlay(.primary)
             VStack(alignment: .leading) {
-                row(model.daily[0], dayName: "Today")
+                row(daily[0], dayName: "Today")
                     .padding([.top, .bottom], -10)
-                ForEach(model.daily[1..<model.daily.count]) { day in
+                ForEach(daily[1..<daily.count]) { day in
                     Divider().overlay(.white)
                     row(day)
                         .padding([.top, .bottom], -10)
@@ -51,15 +52,13 @@ struct DailyTileView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             } else {
-                Text("\(model.toWeekDay(utc: day.dt))")
+                Text("\(toWeekDay(utc: day.dt))")
                     .font(.title3)
                     .fontWeight(.heavy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
             }
-            getIcon(id: day.weather[0].weatherID,
-                    main: day.weather[0].weatherMain,
-                    icon: day.weather[0].weatherIcon)
+            getIcon(id: day.weather[0].weatherID, icon: day.weather[0].weatherIcon)
                     .resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
 
             .frame(width: 30, height: 30)
@@ -70,26 +69,24 @@ struct DailyTileView: View {
                 .frame(maxWidth: .infinity)
         }
     }
+    
+    func toWeekDay(utc: TimeInterval, timeZone: String? = nil) -> String {
+        let date = Date(timeIntervalSince1970: utc)
+        let dateFormatter = DateFormatter()
+        if let timeZone {
+            dateFormatter.timeZone = TimeZone(identifier: timeZone)
+        }
+        dateFormatter.dateFormat = "EEE"
+        return dateFormatter.string(from: date)
+    }
 }
 
 extension DailyTileView {
     @Observable
     class Model {
-        let daily: [Daily]
+      
         
-        init(weatherData: WeatherData) {
-            self.daily = weatherData.daily
-        }
         
-        func toWeekDay(utc: TimeInterval, timeZone: String? = nil) -> String {
-            let date = Date(timeIntervalSince1970: utc)
-            let dateFormatter = DateFormatter()
-            if let timeZone {
-                dateFormatter.timeZone = TimeZone(identifier: timeZone)
-            }
-            dateFormatter.dateFormat = "EEE"
-            return dateFormatter.string(from: date)
-        }
     }
 }
 
@@ -100,7 +97,7 @@ extension DailyTileView {
         var body: some View {
             VStack {
                 if let weatherData {
-                    DailyTileView(weatherData: weatherData)
+                    DailyTileView(daily: weatherData.daily)
                         .padding()
                         .environment(Units())
                 }

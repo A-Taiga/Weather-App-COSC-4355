@@ -14,6 +14,7 @@ struct WeatherView: View {
     @Environment(Units.self) private var units
     @State private var model = Model()
     
+    
     let name: String
     let weatherData: WeatherData
     let currentTemp: Double
@@ -22,6 +23,10 @@ struct WeatherView: View {
     let currentHigh: Double
     let alerts: [Alert]?
     let isSheet: Bool
+    
+    
+    
+
 
     init(name: String, weatherData: WeatherData, isSheet: Bool) {
         self.name = name
@@ -45,9 +50,8 @@ struct WeatherView: View {
             .ignoresSafeArea()
             .overlay(.ultraThinMaterial)
             VStack(spacing: 0) {
-                ScrollView {
-                    LazyVStack {
-                        VStack {
+                ScrollView(.vertical) {
+                    VStack {
                             Text(name)
                                 .font(.largeTitle)
                             Text("\(units.handleTemp(val: currentTemp)) \(units.handleUnit(UnitsTemp.self))")
@@ -58,7 +62,7 @@ struct WeatherView: View {
                                 Text("L: \(units.handleTemp(val: currentLow)) H: \(units.handleTemp(val: currentHigh))")
                                     .font(.headline)
                             }
-                        }
+
                         if let _ = alerts {alertTile}
                         VStack(spacing: 0) {
                             HStack {
@@ -70,7 +74,7 @@ struct WeatherView: View {
                             }
                             .padding()
                             Divider().overlay(.white)
-                            HourlyTileView(weatherData: weatherData)
+                            HourlyTileView(weatherData: weatherData.hourly)
                                 .foregroundStyle(.white)
                                 .padding()
                                 .environment(units)
@@ -81,14 +85,15 @@ struct WeatherView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .padding()
                         
-                        DailyTileView(weatherData: weatherData)
+                        DailyTileView(daily: weatherData.daily)
                             .foregroundStyle(.white)
                             .padding()
                             .environment(units)
-                        WindTileView(weatherData: weatherData)
+                        WindTileView(windSpeed: weatherData.current.wind_speed,
+                                     windDirection: weatherData.current.wind_deg,
+                                     windGust: weatherData.current.wind_gust ?? 0.0)
                             .foregroundStyle(.white)
                             .padding()
-                        
                         MoonPhaseTileView()
                             .foregroundStyle(.white)
                             .padding()
@@ -124,7 +129,6 @@ struct WeatherView: View {
             .ignoresSafeArea(edges: .bottom)
         }
         .navigationBarBackButtonHidden(true)
-        .onAppear(perform: setStyle)
         .sheet(isPresented: $model.alertTap) {
             AlertView(alerts: alerts!,
                       timeZone: weatherData.timezone,
@@ -132,8 +136,8 @@ struct WeatherView: View {
             .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $model.showSettings) {
-            @State var u = units
-            UnitsView(units: $u)
+            @Bindable var u = units
+            UnitsView(units: Binding(get: {u}, set: {u = $0}))
         }
     }
 }
@@ -159,16 +163,6 @@ extension WeatherView {
     }
 }
 
-extension WeatherView {
-    
-    func setStyle() {
-        if (weatherData.current.weather[0].weatherIcon.last == "d") {
-            style.setBackgroundImageDay(from: weatherData.current.weather[0].weatherMain)
-        }
-        else {style.setBackgroundImageNight(from: weatherData.current.weather[0].weatherMain)}
-    }
-}
-
 
 extension WeatherView {
     @Observable
@@ -190,9 +184,6 @@ extension WeatherView {
                         .environment(Units())
                 }
             }.task {
-//                await fetchData(lat: 42.713, lon: -73.204) { data in
-//                    self.weatherData = data
-//                }
                 do {
                     weatherData = try readUserFromBundle(fileName: "NewYork1")
                 } catch {

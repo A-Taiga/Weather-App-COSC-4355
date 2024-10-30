@@ -9,15 +9,15 @@ import SwiftUI
 import Charts
 struct HourlyTileView: View {
     @Environment(Units.self) private var units
-    @State private var model: Model
-    let weatherData: WeatherData
-    init(weatherData: WeatherData) {
-        self.model = Model(weatherData: weatherData)
+    @State private var model = Model()
+    private let weatherData: [Hourly]
+    
+    init(weatherData: [Hourly]) {
         self.weatherData = weatherData
     }
     
     var body: some View {
-        Chart(weatherData.hourly[0..<12]) { hour in
+        Chart(weatherData[0...24]) { hour in
             PointMark(x: .value("", hour.dt.formatted("dha")),
                       y: .value("", units.handleTemp(val: hour.temp)))
             .annotation {
@@ -26,15 +26,15 @@ struct HourlyTileView: View {
             LineMark(x: .value("", hour.dt.formatted("dha")),
                      y: .value("", units.handleTemp(val: hour.temp)))
         }
-        .chartYAxis(.hidden)
         .chartScrollableAxes(.horizontal)
+        .chartYAxis(.hidden)
         .chartXVisibleDomain(length: 5)
         .chartXAxis {
             AxisMarks(position: .top) { value in
                 AxisTick(stroke: .init()).foregroundStyle(.white)
                 AxisGridLine(stroke: .init()).foregroundStyle(.white)
                 AxisValueLabel() {
-                    Text(weatherData.hourly[value.index].dt.formatted("h a"))
+                    Text(weatherData[value.index].dt.formatted("h a"))
                         .foregroundStyle(.white)
                         .font(.title3)
                 }
@@ -47,25 +47,17 @@ struct HourlyTileView: View {
             }
         }
     }
-    
-    func getRange() -> ClosedRange<Int> {
-        let min = units.handleTemp(val: model.minHourlyTemp)
-        let max = units.handleTemp(val: model.maxHourlyTemp)
-        return min-50...max+50
-    }
 
     @ViewBuilder
     func gridIcons(_ index: Int) -> some View {
         VStack {
-            getIcon(id: model.hourly[index].weather[0].weatherID,
-                    main: model.hourly[index].weather[0].weatherMain,
-                    icon: model.hourly[index].weather[0].weatherIcon)
+            getIcon(id: weatherData[index].weather[0].weatherID, icon: weatherData[index].weather[0].weatherIcon)
                     .resizable().aspectRatio(contentMode: .fit).symbolRenderingMode(.multicolor)
             .frame(width: 40, height: 40)
             .shadow(radius: 10)
             let set = ["Rain", "Thunderstorms"]
-            if set.contains(model.hourly[index].weather[0].weatherMain) {
-                Text("\(units.handlePrecipitation(val: model.hourly[index].pop))")
+            if set.contains(weatherData[index].weather[0].weatherMain) {
+                Text("\(units.handlePrecipitation(val: weatherData[index].pop))")
                     .fontWeight(.heavy)
                     .foregroundStyle(.white)
             } else {
@@ -76,38 +68,10 @@ struct HourlyTileView: View {
 }
 
 extension HourlyTileView {
+    
     @Observable
     class Model {
         
-        let hourly: [Hourly]
-        let maxHourlyTemp: Double
-        let minHourlyTemp: Double
-        
-        init (weatherData: WeatherData) {
-            self.hourly = weatherData.hourly
-            self.maxHourlyTemp = hourly.map{$0.temp}.max()!
-            self.minHourlyTemp = hourly.map{$0.temp}.min()!
-        }
-        
-        func toHourDay(utc: TimeInterval, timeZone: String? = nil) -> String {
-            let date = Date(timeIntervalSince1970: utc)
-            let dateFormatter = DateFormatter()
-            if let timeZone {
-                dateFormatter.timeZone = TimeZone(identifier: timeZone)
-            }
-            dateFormatter.dateFormat = "dha"
-            return dateFormatter.string(from: date)
-        }
-        
-        func toHour(utc: TimeInterval, timeZone: String? = nil) -> String {
-            let date = Date(timeIntervalSince1970: utc)
-            let dateFormatter = DateFormatter()
-            if let timeZone {
-                dateFormatter.timeZone = TimeZone(identifier: timeZone)
-            }
-            dateFormatter.dateFormat = "ha"
-            return dateFormatter.string(from: date)
-        }
     }
 }
 
@@ -119,7 +83,7 @@ extension HourlyTileView {
         var body: some View {
             VStack {
                 if let weatherData {
-                    HourlyTileView(weatherData: weatherData)
+                    HourlyTileView(weatherData: weatherData.hourly)
                         .foregroundStyle(.white)
                         .frame(height: 150)
                         .padding()
@@ -133,7 +97,7 @@ extension HourlyTileView {
             }
             .task {
                 do {
-                    weatherData = try readUserFromBundle(fileName: "GoldHillOR")
+                    weatherData = try readUserFromBundle(fileName: "Houston1")
                 } catch {
                     print(error)
                 }

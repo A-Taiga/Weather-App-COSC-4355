@@ -8,11 +8,18 @@
 import SwiftUI
 
 struct WindTileView: View {
-    @Environment(Units.self) var units
-    @State private var model: Model
     
-    init(weatherData: WeatherData) {
-        self.model = Model(weatherData: weatherData)
+    @Environment(Units.self) var units
+//    @State private var model: Model
+    
+    let windSpeed: Double
+    let windDirection: Double
+    let windGust: Double
+    
+    init(windSpeed: Double, windDirection: Double, windGust: Double) {
+        self.windSpeed = windSpeed
+        self.windDirection = windDirection
+        self.windGust = windGust
     }
     
     var body: some View {
@@ -32,19 +39,19 @@ struct WindTileView: View {
                     HStack {
                         Text("Speed")
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(units.handleWind(val: model.windSpeed)) \(units.handleUnit(UnitsSpeed.self))")
+                        Text("\(units.handleWind(val: windSpeed)) \(units.handleUnit(UnitsSpeed.self))")
                     }
                     Divider()
                     HStack {
                         Text("Gust")
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(units.handleWind(val: model.windGust)) \(units.handleUnit(UnitsSpeed.self))")
+                        Text("\(units.handleWind(val: windGust)) \(units.handleUnit(UnitsSpeed.self))")
                     }
                     Divider()
                     HStack {
                         Text("Direction")
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(Int(model.windDirection))° \(model.getWindBearing())")
+                        Text("\(Int(windDirection))° \(getWindBearing())")
                     }
                 }.padding()
                 
@@ -71,7 +78,7 @@ struct WindTileView: View {
                                 .frame(width: 10, height: 10)
                                 .foregroundStyle(.white)
                         }
-                        .rotationEffect(Angle(degrees: model.windDirection - 90))
+                        .rotationEffect(Angle(degrees: windDirection - 90))
                 }
                 .frame(minWidth: 180, maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
@@ -82,40 +89,59 @@ struct WindTileView: View {
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
+    
+    
+    func getWindBearing() -> String {
+        switch windDirection - 90 {
+        case 0: "N"
+        case 90: "E"
+        case 180: "S"
+        case 270: "W"
+        case 0...22.5:  "N"
+        case 22.5...67.5:   "NE"
+        case 67.5...112.5:  "E"
+        case 112.5...157.5: "SE"
+        case 157.5...202.5: "S"
+        case 202.5...247.5: "SW"
+        case 247.5...292.5: "W"
+        case 292.5...337.5: "NW"
+        default: ""
+        }
+    }
 }
 
 extension WindTileView {
     @Observable
     class Model {
-        
-        let windSpeed: Double
-        let windDirection: Double
-        let windGust: Double
+//        
+//        let windSpeed: Double
+//        let windDirection: Double
+//        let windGust: Double
 
+//        
+//        init(weatherData: Current) {
+//            self.windSpeed = weatherData.wind_speed
+//            self.windDirection = weatherData.wind_deg
+//            self.windGust = weatherData.wind_gust ?? 0
+//        }
         
-        init(weatherData: WeatherData) {
-            self.windSpeed = weatherData.current.wind_speed
-            self.windDirection = weatherData.current.wind_deg
-            self.windGust = weatherData.current.wind_gust ?? 0
-        }
-        
-        func getWindBearing() -> String {
-            switch windDirection - 90 {
-            case 0: "N"
-            case 90: "E"
-            case 180: "S"
-            case 270: "W"
-            case 0...22.5:  "N"
-            case 22.5...67.5:   "NE"
-            case 67.5...112.5:  "E"
-            case 112.5...157.5: "SE"
-            case 157.5...202.5: "S"
-            case 202.5...247.5: "SW"
-            case 247.5...292.5: "W"
-            case 292.5...337.5: "NW"
-            default: ""
-            }
-        }
+//        func getWindBearing() -> String {
+//            switch windDirection - 90 {
+//            case 0: "N"
+//            case 90: "E"
+//            case 180: "S"
+//            case 270: "W"
+//            case 0...22.5:  "N"
+//            case 22.5...67.5:   "NE"
+//            case 67.5...112.5:  "E"
+//            case 112.5...157.5: "SE"
+//            case 157.5...202.5: "S"
+//            case 202.5...247.5: "SW"
+//            case 247.5...292.5: "W"
+//            case 292.5...337.5: "NW"
+//            default: ""
+//            }
+//        }
     }
 }
 
@@ -124,8 +150,8 @@ extension WindTileView {
         @State var weatherData: WeatherData?
         var body: some View {
             VStack {
-                if let data = weatherData {
-                    WindTileView(weatherData: data)
+                if let data = weatherData?.current {
+                    WindTileView(windSpeed: data.wind_speed, windDirection: data.wind_deg, windGust: data.wind_gust ?? 0.0)
                         .padding()
                         .environment(Units())
                 }
