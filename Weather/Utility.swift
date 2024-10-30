@@ -326,7 +326,7 @@ let snowNight = [
 let atmosphereDay = [
     701: "",
     711: "smoke.fill",
-    721: "sun.haze",
+    721: "sun.haze.fill",
     731: "sun.dust.fill",
     741: "cloud.fog.fill",
     751: "sun.dust.fill",
@@ -339,7 +339,7 @@ let atmosphereDay = [
 let atmosphereNight = [
     701: "",
     711: "smoke.fill",
-    721: "sun.haze",
+    721: "moon.haze.fill",
     731: "moon.dust.fill",
     741: "cloud.fog.fill",
     751: "moon.dust.fill",
@@ -383,37 +383,34 @@ let cloudsNight = [
     804: "cloud.fill"
 ]
 
-func getIcon(id: Int, main: String, icon: String) -> Image {
-    
+func getIcon(id: Int, icon: String) -> Image {
     var result: String?
     if icon.last == "d" {
-        switch main {
-        case "Thunderstorm": result = thunderstorm[id]
-        case "Drizzle":      result = drizzleDay[id]
-        case "Rain":         result = rainDay[id]
-        case "Snow":         result = snowDay[id]
-        case "Atmosphere":   result = atmosphereDay[id]
-        case "Clouds":       result = cloudsDay[id]
-        case "Clear":        result = "sun.max.fill"
-        default:             result = ""
+        switch id {
+        case 200...232: result = thunderstorm[id]
+        case 300...321: result = drizzleDay[id]
+        case 500...531: result = rainDay[id]
+        case 600...622: result = snowDay[id]
+        case 701...781: result = atmosphereDay[id]
+        case 800:       result = "sun.max.fill"
+        case 801...804: result = cloudsDay[id]
+        default: result = nil
         }
-        
     } else if icon.last == "n" {
-        switch main {
-        case "Thunderstorm": result = thunderstorm[id]
-        case "Drizzle":      result = drizzleNight[id]
-        case "Rain":         result = rainNight[id]
-        case "Snow":         result = snowNight[id]
-        case "Atmosphere":   result = atmosphereNight[id]
-        case "Clouds":       result = cloudsNight[id]
-        case "Clear":        result = "moon.stars.fill"
-        default:             result = ""
+        switch id {
+        case 200...232: result = thunderstorm[id]
+        case 300...321: result = drizzleNight[id]
+        case 500...531: result = rainNight[id]
+        case 600...622: result = snowNight[id]
+        case 701...781: result = atmosphereNight[id]
+        case 800:       result = "moon.stars.fill"
+        case 801...804: result = cloudsNight[id]
+        default: result = nil
         }
     }
-    guard let result else {return Image("")}
+    guard let result else {return Image(systemName: "")}
     return Image(systemName: result)
 }
-
 
 func unixToTime(_ time: Int32, format: String, timeZone: String? = nil) -> String {
     let date = Date(timeIntervalSince1970: TimeInterval(time))
@@ -451,7 +448,6 @@ func adjustedTimeInterval(from timeInterval: TimeInterval, toTimeZoneIdentifier 
     return adjustedTimeInterval
 }
 
-
 func fetchData (lat: Double, lon: Double, completion: @escaping(_ data: WeatherData?)  -> () ) async {
     do {
         let env = ProcessInfo.processInfo.environment
@@ -461,4 +457,5 @@ func fetchData (lat: Double, lon: Double, completion: @escaping(_ data: WeatherD
     } catch {
         print (error)
     }
+    
 }
