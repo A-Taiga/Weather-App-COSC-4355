@@ -8,34 +8,28 @@
 import SwiftUI
 
 
+@Observable
+class WeatherModel {
+    var weatherData: WeatherData
+    init(weatherData: WeatherData) {
+        self.weatherData = weatherData
+    }
+}
+
 struct SavedLocationView: View {
     @Environment(Units.self) private var units
     @State private var style = Style()
     private let weatherData: WeatherData
     private let time: TimeInterval
     private let name: String
-    private let weather: Weather
-    private let low: Double
-    private let high: Double
-    private let currentTemp: Double
-    private let sunset: TimeInterval
-    private let sunrise: TimeInterval
-    
     
     init(name: String, weatherData: WeatherData, time: TimeInterval) {
         self.weatherData = weatherData
         self.time = adjustedTimeInterval(from: time, toTimeZoneIdentifier: weatherData.timezone)
         self.name = name
-        self.weather = weatherData.current.weather[0]
-        self.low = weatherData.daily[0].temp.min
-        self.high = weatherData.daily[0].temp.max
-        self.currentTemp = weatherData.current.temp
-        self.sunset = adjustedTimeInterval(from: weatherData.current.sunset, toTimeZoneIdentifier: weatherData.timezone)
-        self.sunrise = adjustedTimeInterval(from: weatherData.current.sunrise, toTimeZoneIdentifier: weatherData.timezone)
     }
     
     var body: some View {
-        
         ZStack {
             GeometryReader { proxy in
                 Image(style.backgroundImage)
@@ -66,16 +60,16 @@ struct SavedLocationView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        getIcon(id: weather.weatherID, main: weather.weatherMain, icon: weather.weatherIcon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .symbolRenderingMode(.multicolor)
+                        getIcon(id: weatherData.current.weather[0].weatherID, icon: weatherData.current.weather[0].weatherIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .symbolRenderingMode(.multicolor)
                         VStack {
-                            Text("\(units.handleTemp(val: currentTemp))\(units.handleUnit(UnitsTemp.self))")
+                            Text("\(units.handleTemp(val: weatherData.current.temp))\(units.handleUnit(UnitsTemp.self))")
                                 .font(.title)
                             HStack {
-                                Text("H: \(units.handleTemp(val: low))")
-                                Text("L: \(units.handleTemp(val: high))")
+                                Text("H: \(units.handleTemp(val: weatherData.daily[0].temp.min))")
+                                Text("L: \(units.handleTemp(val: weatherData.daily[0].temp.max))")
                             }.fixedSize(horizontal: true, vertical: true)
                         }
                         .minimumScaleFactor(0.01)
@@ -90,26 +84,25 @@ struct SavedLocationView: View {
                     .environment(units)
                     .environment(style)) {
                         Rectangle().fill(.clear)
-//                            .matchedTransitionSource(id: "icon", in: namespace)
+                        //                            .matchedTransitionSource(id: "icon", in: namespace)
                     }
                     .navigationBarBackButtonHidden(true)
                     .opacity(0)
+                }
             }
+            .foregroundStyle(style.fontColor)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .onAppear(perform: setStyle)
         }
-        .foregroundStyle(style.fontColor)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .onAppear(perform: setStyle)
-    }
 }
 
 extension SavedLocationView {
     
     func setStyle() {
-        
-        if (weather.weatherIcon.last == "d") {
-            style.setBackgroundImageDay(from: weather.weatherMain)
+        if (weatherData.current.weather[0].weatherIcon.last == "d") {
+            style.setBackgroundImageDay(from: weatherData.current.weather[0].weatherMain)
         }
-        else {style.setBackgroundImageNight(from: weather.weatherMain)}
+        else {style.setBackgroundImageNight(from: weatherData.current.weather[0].weatherMain)}
     }
 }
 
@@ -117,32 +110,16 @@ extension SavedLocationView {
 class Style {
     
     var fontColor: Color = .white
-    var backgroundImage: String = ""
-    
-//    func setFont(icon: String) {
-//        switch (icon) {
-//        case "Clear":               fontColor = .white
-//        case "clear-night":         fontColor = .white
-//        case "rain":                fontColor = .black
-//        case "cloudy":              fontColor = .black
-//        case "partly-cloudy-day":   fontColor = .black
-//        case "partly-cloudy-night": fontColor = .white
-//        case "snow":                fontColor = .black
-//        case "sleet":               fontColor = .black
-//        case "wind":                fontColor = .black
-//        case "fog":                 fontColor = .black
-//        default:                    fontColor = .white
-//        }
-//    }
-    
+    var backgroundImage = String()
+
     func setBackgroundImageDay(from icon: String) {
         switch (icon) {
         case "Clear":       backgroundImage = "clearDay"
         case "Rain":        backgroundImage = "stormDay"
         case "Drizze":      backgroundImage = "stormDay"
         case "Clouds":      backgroundImage = "partlyCloudyDay"
-        case "Snow":        backgroundImage = ""
-        default:            backgroundImage = ""
+        case "Snow":        backgroundImage = "partlyCloudyDay"
+        default:            backgroundImage = "clearDay"
         }
     }
     
@@ -152,8 +129,8 @@ class Style {
         case "Rain":        backgroundImage = "stormNight"
         case "Drizze":      backgroundImage = "stormNight"
         case "Clouds":      backgroundImage = "cloudyNight"
-        case "Snow":        backgroundImage = ""
-        default:            backgroundImage = ""
+        case "Snow":        backgroundImage = "cloudyNight"
+        default:            backgroundImage = "clearNight"
         }
     }
 }
