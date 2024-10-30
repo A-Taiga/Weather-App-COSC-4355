@@ -209,7 +209,7 @@ extension ContentView {
         var showOtherUnits = false
         var editList: EditMode = .inactive
         var buttonRotation = 0.0
-        let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+        let timer = Timer.publish(every: 1, on: .current, in: .default).autoconnect()
         
         
         func dismissSheet() {
