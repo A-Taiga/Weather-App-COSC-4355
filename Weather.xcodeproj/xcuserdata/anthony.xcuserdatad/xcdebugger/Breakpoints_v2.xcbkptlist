@@ -3,4 +3,36 @@
    uuid = "1308997D-7A77-4333-816B-EDC89717AEE0"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.SymbolicBreakpoint">
+         <BreakpointContent
+            uuid = "3BDDFCAA-8361-49E3-8536-B74C7C6210B0"
+            shouldBeEnabled = "Yes"
+            nameForDebugger = "[UIImage,imageNamed:]"
+            condition = "[(NSString*)$x2 length] == 0"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            moduleName = "">
+            <Locations>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "1A07A2CC-0BDC-45B3-9E6B-3EB6E4547DA1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../../../var/folders/c7/5k9ly8451p5gtcz7mg855wgc0000gn/T/swift-generated-sources/@__swiftmacro_7Weather9DataModelC8location18_PersistedPropertyfMa_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "unknown"
+            landmarkType = "0">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

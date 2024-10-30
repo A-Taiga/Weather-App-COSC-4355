@@ -14,8 +14,8 @@
     add charts for some of the tiles when clicked on
     find a good photo for snow background
     maybe add drag and drop functionality for saved locations or tiles
-    
  */
+
 
 import SwiftUI
 import SwiftData
@@ -25,14 +25,14 @@ struct ContentView: View {
     @Environment(\.modelContext) var modelContext
     @State var model = Model()
     @Query(sort: \DataModel.listIndex) var savedData: [DataModel]
+    @State var locationManager = LocationManager()
     var body: some View {
         NavigationStack {
             Spacer()
             List {
                 ForEach(savedData) { data in
-                        SavedLocationView(name: data.name, weatherData: data.weatherData, time: model.currentTime)
+                    SavedLocationView(name: data.location.locality, weatherData: data.weatherData, time: model.currentTime)
                             .environment(model.units)
-                    
                 }
                 .onMove(perform: move)
                 .onDelete {set in _ = set.map{modelContext.delete(savedData[$0])}; try? modelContext.save()}
@@ -44,7 +44,7 @@ struct ContentView: View {
             }
             .listRowSpacing(30)
             .environment(\.editMode, $model.editList)
-            .overlay {listOverlay}
+            .overlay {listOverlay()}
             .navigationTitle("Weather")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $model.search.text,
@@ -54,8 +54,7 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     ZStack {
-                        if model.editList == .inactive {inactiveMenu
-                        } else {activeMenu}
+                        if model.editList == .inactive {inactiveMenu()} else {activeMenu()}
                     }
                     .frame(width: 40, height: 40)
                     .rotationEffect(.degrees(Double(model.buttonRotation)))
@@ -66,20 +65,11 @@ struct ContentView: View {
         .preferredColorScheme(.dark)
         .onChange(of: model.searchFocused, {model.searchFocusedHandler()})
         .onChange(of: model.selectionTitle) {Task {await model.getLocationInfo()}}
-        .sheet(isPresented: $model.showSelection, onDismiss: {model.dismissSheet()}) {weatherSheet}
+        .sheet(isPresented: $model.showSelection, onDismiss: {model.dismissSheet()}) {weatherSheet()}
         .sheet(isPresented: $model.showOtherUnits, onDismiss: {model.showOtherUnits = false}) {UnitsView(units: $model.units)}
         .onReceive(model.timer) {model.currentTime = $0.timeIntervalSince1970}
-        // for debug
         .onAppear() {
-            if let data = try? readUserFromBundle(fileName: "GoldHillOR") {
-                modelContext.insert(DataModel(name: "Gold Hill", weatherData: data, listIndex: 0))
-            }
-            if let data = try? readUserFromBundle(fileName: "Houston1") {
-                modelContext.insert(DataModel(name: "Houston", weatherData: data, listIndex: 1))
-            }
-            if let data = try? readUserFromBundle(fileName: "SomePlace") {
-                modelContext.insert(DataModel(name: "Some Place", weatherData: data, listIndex: 2))
-            }
+            locationManager.checkLocationAuthorization()
         }
     }
     
@@ -92,7 +82,9 @@ struct ContentView: View {
         try? modelContext.save()
     }
     
-    var inactiveMenu: some View {
+    
+    @ViewBuilder
+    func inactiveMenu() -> some View {
         Menu {
             Button("Edit") {
                 withAnimation {
@@ -111,8 +103,8 @@ struct ContentView: View {
                 .aspectRatio(contentMode: .fit)
         }
     }
-
-    var activeMenu: some View {
+    @ViewBuilder
+    func activeMenu() -> some View {
         Button {
             withAnimation {
                 model.editList = .inactive
@@ -125,7 +117,8 @@ struct ContentView: View {
         }
     }
     
-    var listOverlay: some View {
+    @ViewBuilder
+    func listOverlay() -> some View {
         VStack {
             List(model.search.results, id: \.id) { result in
                 Button{
@@ -148,14 +141,15 @@ struct ContentView: View {
         }
     }
     
-    var weatherSheet: some View {
+    @ViewBuilder
+    func weatherSheet() -> some View {
         VStack {
             if let location = model.selectedResult {
                 ZStack {
                     GeometryReader { _ in
                         if let data = self.model.selectedWeatherData {
                             WeatherView(name: location.locality, weatherData: data, isSheet: true)
-                                .environment(Style())
+                                .environment(model.tempStyle)
                                 .environment(model.units)
                             
                             HStack {
@@ -165,14 +159,12 @@ struct ContentView: View {
                                 .font(.title3)
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                if !savedData.contains(where: {$0.name == location.locality}) {
-                                    Button("Add") {
-                                        modelContext.insert(DataModel(name: location.locality,
+                                if !savedData.contains(where: {$0.location == location}) {
+                                    Button ("Add") {
+                                        modelContext.insert(DataModel(location: location,
                                                                       weatherData: data,
                                                                       listIndex: savedData.isEmpty ? 0 : savedData.count))
-                                        
                                         try? modelContext.save()
-                                        
                                         model.showSelection = false
                                         model.search.text = ""
                                         model.searchFocused = false
@@ -184,25 +176,16 @@ struct ContentView: View {
                             }
                         }
                     }
-                }
-                .task {
-                    await model.getLocationInfo()
-                    await fetchData(lat: location.location.latitude, lon: location.location.longitude) {
+                }.task {
+                    await fetchData(lat: location.lat, lon: location.lon) {
                         self.model.selectedWeatherData = $0
-                    }
-                }
-            }
-        }
-    }
-}
-
-extension ContentView {
-    func updateWeatherData() {
-        Task {@MainActor in
-            for index in savedData.indices {
-                await fetchData(lat: savedData[index].weatherData.lat, lon: savedData[index].weatherData.lat) {
-                    if let data = $0 {
-                        savedData[index].weatherData = data
+                        if let weather = $0?.current.weather[0] {
+                            if (weather.weatherIcon.last == "d") {
+                                model.tempStyle.setBackgroundImageDay(from: weather.weatherMain)
+                            } else {
+                                model.tempStyle.setBackgroundImageNight(from: weather.weatherMain)
+                            }
+                        }
                     }
                 }
             }
@@ -215,8 +198,9 @@ extension ContentView {
     class Model {
         var units = Units()
         var search = Search()
+        var tempStyle = Style()
         var selectionTitle: String?
-        var selectedResult: LocationInfo?
+        var selectedResult: LocationModel?
         var selectedWeatherData: WeatherData?
         var showSelection = false
         var searchFocused = false
@@ -225,8 +209,8 @@ extension ContentView {
         var showOtherUnits = false
         var editList: EditMode = .inactive
         var buttonRotation = 0.0
-        let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-//        let weatherDataTimer = Timer.publish(every: 600, on: .main, in: .common).autoconnect()
+        let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+        
         
         func dismissSheet() {
             selectionTitle = nil
@@ -243,9 +227,50 @@ extension ContentView {
         func getLocationInfo() async {
             guard let selectionTitle else {return}
             getCoords(from: selectionTitle) {
-                self.selectedResult = LocationInfo(locality: $0, administrativeArea: $1, subAdministrativeArea: $2, location: $3)
+                self.selectedResult = LocationModel(locality: $0,
+                                                    administrativeArea: $1,
+                                                    subAdministrativeArea: $2,
+                                                    coordinates: $3)
             }
         }
+    }
+}
+
+
+@Observable
+final class LocationManager: NSObject, CLLocationManagerDelegate {
+    
+    var location: CLLocationCoordinate2D?
+    var manager = CLLocationManager()
+    var place: CLPlacemark?
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        location = locations.first?.coordinate
+        if let location = locations.first {
+            CLGeocoder().reverseGeocodeLocation(location) { value, error in
+                guard let value else {print("error"); return}
+                self.place = value.first
+            }
+        }
+    }
+    
+    func checkLocationAuthorization() {
+        manager.delegate = self
+//        manager.startUpdatingLocation()
+        manager.startMonitoringSignificantLocationChanges()
+        switch manager.authorizationStatus {
+        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .restricted: print(".restricted")
+        case .denied: print(".denied")
+        case .authorizedAlways: print(".authorizedAlways")
+        case .authorizedWhenInUse: location = manager.location?.coordinate
+        case .authorized: location = manager.location?.coordinate
+        @unknown default: print("user location dissabled")
+        }
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
     }
 }
 
@@ -276,7 +301,6 @@ class Search: NSObject, ObservableObject {
 
 extension Search: MKLocalSearchCompleterDelegate {
     
-    
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         Task { @MainActor in
             results = completer.results.map {
@@ -300,21 +324,6 @@ struct SearchResult: Identifiable {
     }
 }
 
-struct LocationInfo {
-    let locality: String
-    let administrativeArea: String
-    let subAdministrativeArea: String
-    let location: CLLocationCoordinate2D
-    
-    init(locality: String, administrativeArea: String, subAdministrativeArea: String, location: CLLocationCoordinate2D) {
-        self.locality = locality
-        self.administrativeArea = administrativeArea
-        self.subAdministrativeArea = subAdministrativeArea
-        self.location = location
-    }
-}
-
-
 func getCoords(from address: String, completion: @escaping (_ locality: String,
                                                                     _ administrativeArea: String,
                                                                     _ subAdministrativeArea: String,
@@ -326,6 +335,8 @@ func getCoords(from address: String, completion: @escaping (_ locality: String,
         completion(locality, info.administrativeArea ?? "", info.subAdministrativeArea ?? "", location)
     }
 }
+
+
 
 
 #Preview {
