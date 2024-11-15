@@ -116,8 +116,6 @@ extension MoonPhaseTileView {
             self.nextNewMoon = moon.daysTillNewMoon
         }
         
-        
-        
         func getMoonPhase(from date: Date) -> String {
             let moon = TinyMoon.calculateExactMoonPhase(date)
             guard let phase = phases[moon.moonPhase] else {return ""}

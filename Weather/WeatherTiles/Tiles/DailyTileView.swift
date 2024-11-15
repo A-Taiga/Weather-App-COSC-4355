@@ -16,18 +16,25 @@ struct DailyTileView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Image(systemName: "calendar")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .symbolRenderingMode(.multicolor)
-                Text("Daily Forecast")
+        ZStack {
+            GeometryReader { geo  in
+                RoundedRectangle(cornerRadius: 10).fill(.ultraThinMaterial)
             }
-            .frame(height: 20)
-            .padding([.top, .leading])
-            Divider().overlay(.primary)
+            
             VStack(alignment: .leading) {
+                
+                HStack {
+                    Image(systemName: "calendar")
+                        .symbolRenderingMode(.multicolor)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                    Text("Daily Forecast")
+                }
+                .frame(height: 20)
+                .padding([.leading, .top])
+                
+                Divider().overlay(.white)
+                
                 row(daily[0], dayName: "Today")
                     .padding([.top, .bottom], -10)
                 ForEach(daily[1..<daily.count]) { day in
@@ -37,9 +44,7 @@ struct DailyTileView: View {
                 }
             }
         }
-        .background(.black.opacity(0.3))
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding()
     }
     
     @ViewBuilder

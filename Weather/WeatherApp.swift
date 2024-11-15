@@ -10,6 +10,7 @@ import SwiftData
 
 @main
 struct WeatherApp: App {
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             DataModel.self,
