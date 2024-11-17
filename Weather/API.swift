@@ -189,7 +189,6 @@ struct FeelsLike: Codable {
 
 struct Rain: Codable {
     
-    
     let oneHour: Double? // only uses mm/h
     
     private enum CodingKeys: String, CodingKey {

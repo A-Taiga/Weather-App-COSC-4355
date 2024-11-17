@@ -8,8 +8,10 @@
 import SwiftUI
 import Charts
 struct HourlyTileView: View {
+    
     @Environment(Units.self) private var units
     @State private var model = Model()
+    @State private var showSheet = false
     private let weatherData: [Hourly]
     
     init(weatherData: [Hourly]) {
@@ -65,6 +67,11 @@ struct HourlyTileView: View {
                 .padding()
             }
         }
+        .onTapGesture(perform: {showSheet = true})
+        .sheet(isPresented: $showSheet) {
+            HourlyChartView(weatherData: weatherData, isShowing: $showSheet)
+                .padding(.top)
+        }
     }
 
     @ViewBuilder
@@ -88,6 +95,7 @@ struct HourlyTileView: View {
     }
 }
 
+
 extension HourlyTileView {
     
     @Observable
@@ -97,7 +105,6 @@ extension HourlyTileView {
 }
 
 #Preview {
-    
     struct Preview: View {
         @State var units = Units()
         @State var weatherData: WeatherData?

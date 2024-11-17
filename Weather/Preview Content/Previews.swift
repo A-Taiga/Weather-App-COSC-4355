@@ -110,3 +110,29 @@ struct SavedLocationViewPreview: View, Previewable {
     }
 }
 
+struct HourlyChartViewPreview: View, Previewable {
+    
+    @State var hourlyData: [Hourly]?
+    
+    var fileName: String
+    var cityName: String
+    var adminArea: String
+    
+    init(fileName: String, cityName: String, adminArea: String) {
+        self.fileName = fileName
+        self.cityName = cityName
+        self.adminArea = adminArea
+    }
+    
+    var body: some View {
+        VStack {
+            if let hourlyData {
+                HourlyChartView(weatherData: hourlyData, isShowing: .constant(true))
+            }
+        }.onAppear {
+            if let data = createDumyModel(fileName: self.fileName, locationName: self.cityName, adminArea: self.adminArea) {
+                self.hourlyData = data.weatherData.hourly
+            }
+        }
+    }
+}

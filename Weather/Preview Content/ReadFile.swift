@@ -17,23 +17,6 @@ func readJson(from fileName: String) -> WeatherData? {
     }
 }
 
-//
-//    .onAppear {
-//        if let weather = try? readUserFromBundle(fileName: "GoldHillOR") {
-//            let coords = CLLocationCoordinate2D(latitude: weather.lat, longitude: weather.lon)
-//            let local = LocationModel(locality: "Gold Hill",
-//                                     administrativeArea: "OR",
-//                                     subAdministrativeArea: "",
-//                                     coordinates: coords)
-//            self.model.data = DataModel(location: local, weatherData: weather, listIndex: 0)
-//            self.model.data?.isUserLocation = true
-//            if let weatherStyle = self.model.data?.weatherData.current.weather.first {
-//                self.model.locationStyle.setStyle(from: weatherStyle)
-//            }
-//        }
-//    }
-
-
 func createDumyModel(fileName: String, locationName: String, adminArea: String, subAdmin: String? = nil) -> DataModel? {
     guard let weather = readJson(from: fileName) else {return nil}
     let coords = CLLocationCoordinate2D(latitude: weather.lat, longitude: weather.lon)
@@ -45,3 +28,9 @@ func createDumyModel(fileName: String, locationName: String, adminArea: String, 
     model.isUserLocation = true
     return model
 }
+
+
+
+
+
+
