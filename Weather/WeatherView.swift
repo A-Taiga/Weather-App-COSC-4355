@@ -10,10 +10,11 @@ import CoreLocation
 
 struct WeatherView: View {
     
-    @Environment(Units.self) private var units
-    private(set) var viewModel = WeatherViewModel()
+    @Environment(SelectedUnits.self) private var selectedUnits
+    var viewModel = WeatherViewModel()
     @State private var didExit = false
     private var isSheet = false
+    
     init(for viewModel: WeatherViewModel) {
         self.viewModel = viewModel
     }
@@ -21,14 +22,11 @@ struct WeatherView: View {
     init(for dataModel: DataModel) {
         self.viewModel = WeatherViewModel()
         self.viewModel.data = dataModel
-        if let weather = dataModel.weatherData.current.weather.first {
-            self.viewModel.locationStyle.setStyle(from: weather)
-        }
         self.isSheet = true
     }
-       
     
     var body: some View {
+        
         ZStack {
             GeometryReader { proxy in
                 Image(viewModel.locationStyle.backgroundImage)
@@ -51,7 +49,9 @@ struct WeatherView: View {
                     }
 
                     if !viewModel.hourly.isEmpty {
-                        HourlyTileView(weatherData: viewModel.hourly).frame(height: 250)
+                        HourlyTileView(weatherData: viewModel.hourly)
+                            .environment(selectedUnits)
+                            .frame(height: 250)
                             .padding()
                     }
                     
@@ -79,12 +79,12 @@ struct WeatherView: View {
             Text(viewModel.name)
                 .font(.system(size: 40))
             
-            Text(viewModel.getTemp(units))
+            Text("\(viewModel.currentTemp)")
                 .font(.system(size: 40))
             
             HStack {
-                Text("L: " + viewModel.getLow(units))
-                Text("H: " + viewModel.getHigh(units))
+                Text("H: " + "\(Int(viewModel.currentMax.val))")
+                Text("L: " + "\(Int(viewModel.currentMin.val))")
             }.font(.title)
             
             Text(viewModel.currentConditions)

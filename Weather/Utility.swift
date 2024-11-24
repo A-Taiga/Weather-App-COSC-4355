@@ -8,133 +8,6 @@
 import Foundation
 import SwiftUI
 
-enum UnitsTemp {
-    case fahrenheit
-    case celsius
-}
-
-enum UnitsSpeed {
-    case milesPerHour
-    case kilometersPerHour
-    case metersPerSecond
-    case knots
-}
-
-enum UnitsPrecipitation {
-    case inches
-    case millimeters
-    case centimeter
-}
-
-enum UnitsDistance {
-    case miles
-    case kilometers
-}
-
-@Observable
-class Units {
-    
-    var temp: UnitsTemp = .fahrenheit
-    var wind: UnitsSpeed = .milesPerHour
-    var precipitation: UnitsPrecipitation = .inches
-    var distance: UnitsDistance = .miles
-    
-    func handleUnit<T> (_ unitType: T.Type) -> String {
-        
-        if T.self == UnitsTemp.self {
-            switch temp {
-            case .fahrenheit: return "°F"
-            case .celsius:    return "°C"
-            }
-        } else if T.self == UnitsSpeed.self {
-            switch wind {
-            case .milesPerHour:      return "mph"
-            case .kilometersPerHour: return "km/h"
-            case .metersPerSecond:   return "m/s"
-            case .knots:             return "kn"
-            }
-        } else if T.self == UnitsPrecipitation.self {
-            switch precipitation {
-            case .inches:      return "in"
-            case .millimeters: return "mm"
-            case .centimeter:  return "cm"
-            }
-        } else if T.self == UnitsDistance.self {
-            switch distance {
-            case .miles:      return "mi"
-            case .kilometers: return "km"
-            }
-        } else {
-            return ""
-        }
-    }
-    
-    func handleTemp(val: Double) -> Int {
-        switch temp {
-        case .fahrenheit: return Int(val.rounded())
-        case .celsius:    return Int(toCelsius(val).rounded())
-        }
-    }
-    
-    func handleWind(val: Double) -> Int {
-        switch wind {
-        case .milesPerHour:         return Int(val.rounded())
-        case .kilometersPerHour:    return Int(toKilometers(val).rounded())
-        case .metersPerSecond:      return Int(toMeterPerSecond(val).rounded())
-        case .knots:                return Int(toKnots(val).rounded())
-        }
-    }
-    
-    func handlePrecipitation(val: Double) -> Int {
-        switch precipitation {
-        case .inches:      return Int(val * 100)
-        case .millimeters: return Int(toMillimeters(val * 100))
-        case .centimeter:  return Int(toCentimeter(val * 100))
-        }
-    }
-    
-    func handleDistance(val: Double) -> Int {
-        switch distance {
-        case .miles: return Int(val.rounded())
-        case .kilometers: return Int(toKilometers(val).rounded())
-        }
-    }
-    
-    // MARK: temp
-    func toCelsius (_ val: Double) -> Double {
-        return (val - 32) * 5 / 9
-    }
-    
-    func toKelvin (_ val: Double) -> Double {
-        return (val - 32) * 5/9 + 273.15
-    }
-    // MARK: speed
-    func toKph (_ val: Double) -> Double {
-        return val * 1.609
-    }
-    
-    func toMeterPerSecond (_ val: Double) -> Double {
-        return val / 2.237
-    }
-    
-    func toKnots (_ val: Double) -> Double {
-        return val / 1.151
-    }
-    // MARK: precipitation
-    func toMillimeters (_ val: Double) -> Double {
-        return val * 25.4
-    }
-    
-    func toCentimeter (_ val: Double) -> Double {
-        return val * 2.54
-    }
-    // MARK: distance
-    func toKilometers (_ val: Double) -> Double {
-        return val * 1.609
-    }
-}
-
-
 /*
  01d.png     01n.png     clear sky
  02d.png     02n.png     few clouds
@@ -458,3 +331,7 @@ func fetchData (lat: Double, lon: Double, completion: @escaping(_ data: WeatherD
     }
     
 }
+
+
+
+

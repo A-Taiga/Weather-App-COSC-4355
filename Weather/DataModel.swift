@@ -19,6 +19,8 @@ final class DataModel: Identifiable {
     var location: LocationModel
     var listIndex: Int
     var weatherData: WeatherData
+    var dateFetched: TimeInterval = Date.now.timeIntervalSince1970
+    
     
     init(location: LocationModel, weatherData: WeatherData, listIndex: Int) {
         self.isUserLocation = false
@@ -34,13 +36,12 @@ final class DataModel: Identifiable {
             let (data, _) = try await URLSession.shared.data (from: url)
             self.weatherData = try JSONDecoder().decode(WeatherData.self, from: data)
             
+            print(location.locality," updated at ", unixToTime(Int32(weatherData.current.dt), format: "hh:mm:ss a"))
+            
         } catch {
             print(error)
         }
     }
-    
-    
-    
 }
 
 @Model
@@ -66,14 +67,6 @@ final class LocationModel: Equatable {
         lhs.subAdministrativeArea == rhs.subAdministrativeArea
     }
 }
-
-//
-//func setStyle() {
-//    if (dataModel.weatherData.current.weather[0].weatherIcon.last == "d") {
-//        style.setBackgroundImageDay(from: dataModel.weatherData.current.weather[0].weatherMain)
-//    }
-//    else {style.setBackgroundImageNight(from: dataModel.weatherData.current.weather[0].weatherMain)}
-//}
 
 @Observable
 class Style {
@@ -103,29 +96,3 @@ class Style {
         }
     }
 }
-
-//
-//class FetchedData: ObservableObject {
-//    
-//    
-//    @Published var data: WeatherData?
-//    private let lat: Double
-//    private let lon: Double
-//    
-//    init(lat: Double, lon: Double) {
-//        self.lat = lat
-//        self.lon = lon
-//    }
-//    
-//    func fetch () async {
-//        do {
-//            let env = ProcessInfo.processInfo.environment
-//            guard let url = URL(string: "https://api.openweathermap.org/data/3.0/onecall?lat=\(lat)&lon=\(lon)&units=imperial&appid=\(env["API_KEY"] ?? "")") else {return}
-//            let (data, _) = try await URLSession.shared.data (from: url)
-//            self.data = try JSONDecoder().decode(WeatherData.self, from: data)
-//            
-//        } catch {
-//            print(error)
-//        }
-//    }
-//}

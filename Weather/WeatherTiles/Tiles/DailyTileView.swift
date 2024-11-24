@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DailyTileView: View {
-    @Environment(Units.self) private var units
+    @Environment(SelectedUnits.self) private var selectedUnits
     private let daily: [Daily]
 
     init(daily: [Daily]) {
@@ -69,8 +69,9 @@ struct DailyTileView: View {
             .frame(width: 30, height: 30)
             .shadow(radius: 10)
             .frame(maxWidth: .infinity)
-            (Text("\(units.handleTemp(val: day.temp.min))\(units.handleUnit(UnitsTemp.self))") +
-            Text(" -> \(units.handleTemp(val: day.temp.max))\(units.handleUnit(UnitsTemp.self))"))
+            (Text("\(Temperature(day.temp.min, selectedUnits.temperature)) ") +
+             Text(Image(systemName: "arrow.right")) +
+             Text(" \(Temperature(day.temp.max, selectedUnits.temperature))"))
                 .frame(maxWidth: .infinity)
         }
     }
@@ -101,10 +102,10 @@ extension DailyTileView {
         @State var weatherData: WeatherData?
         var body: some View {
             VStack {
-                if let weatherData {
-                    DailyTileView(daily: weatherData.daily)
+                if let daily = weatherData?.daily {
+                    DailyTileView(daily: daily)
                         .padding()
-                        .environment(Units())
+                        .environment(SelectedUnits())
                 }
             }.task {
                 do {

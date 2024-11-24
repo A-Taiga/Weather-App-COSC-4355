@@ -8,10 +8,11 @@
 import SwiftUI
 import Charts
 
-struct HourlyChartView: View {
+struct HourlyConditionsView: View {
 
     
-    @Environment(Units.self) var units
+//    @Environment(Units.self) var units
+    @Environment(SelectedUnits.self) var selectedUnits
     private let weatherData: [Hourly]
     @State private var viewModel: ChartModel
     
@@ -44,7 +45,7 @@ struct HourlyChartView: View {
                        }) {
                         Text(selectedDate.timeIntervalSince1970.formatted("h:mm a"))
                         HStack {
-                            Text("\(units.handleTemp(val: weather.temp))\(units.handleUnit(UnitsTemp.self))")
+                            Text("\(Temperature(weather.temp, selectedUnits.temperature))")
                             getIcon(id: weather.weather[0].weatherID, icon: weather.weather[0].weatherIcon)
                                 .symbolRenderingMode(.multicolor)
                                 .resizable()
@@ -62,7 +63,7 @@ struct HourlyChartView: View {
                             $0.dt == Date(timeIntervalSince1970: viewModel.time).nearestHour()?.timeIntervalSince1970
                         }) {
                             HStack {
-                                Text("\(units.handleTemp(val: weather.temp))\(units.handleUnit(UnitsTemp.self))")
+                                Text("\(Temperature(weather.temp, selectedUnits.temperature))")
                                 getIcon(id: weather.weather[0].weatherID, icon: weather.weather[0].weatherIcon)
                                     .symbolRenderingMode(.multicolor)
                                     .resizable()
@@ -81,6 +82,7 @@ struct HourlyChartView: View {
                     Button() {viewModel.selectedChartDataType = .temp} label: {Text("Temperature")}
                     Button() {viewModel.selectedChartDataType = .feelsLike} label: {Text("Feels Like")}
                     Button() {viewModel.selectedChartDataType = .humidity} label: {Text("Hummidity")}
+                    Button() {viewModel.selectedChartDataType = .pressure} label: {Text("Pressure")}
                 } label: {
                     getSelectedChartImage()
                         .symbolRenderingMode(.multicolor)
@@ -88,10 +90,8 @@ struct HourlyChartView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 25, height: 25)
                 }
+                .buttonStyle(.borderedProminent)
                 .foregroundStyle(.white)
-                .padding()
-                .background(.gray)
-                .clipShape(Circle())
             }
             .padding(.trailing)
 
@@ -100,21 +100,23 @@ struct HourlyChartView: View {
                     RoundedRectangle(cornerRadius: 10).fill(.ultraThinMaterial)
                 }
                 
-                Chart(viewModel.data) {
-                    
+                Chart(viewModel.data[0...24]) {
                     switch viewModel.selectedChartDataType {
                         case .temp: tempChartContent($0)
                         case .feelsLike: feelsLikeChartContent($0)
                         case .humidity: hummidtyChartContent($0)
+                    case .pressure: pressureChartContent($0)
                     }
                     chartContent()
                 }
-                .chartYScale(domain: viewModel.yScaleDomain(self.units))
+                .chartYScale(domain: viewModel.yScaleDomain)
+                .chartXScale(domain: Date(timeIntervalSince1970: viewModel.minTime)...Date(timeIntervalSince1970: viewModel.minTime).advanced(by: 3600*24))
                 .chartYAxis {
                     chartYAxisMarks()
                 }
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .hour, count: 12)) { value in
+                    
+                    AxisMarks(values: .stride(by: .hour, count: 6)) { value in
                         
                         AxisGridLine()
                         AxisTick()
@@ -123,11 +125,12 @@ struct HourlyChartView: View {
                      
                     }
                     
-                    AxisMarks(position: .top, values: .stride(by: .hour, count: 1)) { value in
-                        if value.index % 4 == 0 {
-                            AxisValueLabel(anchor: UnitPoint.bottomLeading) {
-                                getIcon(id: viewModel.data[value.index].weather.first!.weatherID,
-                                        icon: viewModel.data[value.index].weather.first!.weatherIcon)
+                    AxisMarks(position: .top, values: .stride(by: .hour, count: 2)) { value in
+                        
+                        if let v = value.as(Date.self),
+                           let weather = viewModel.data.first(where: {$0.dt == v.nearestHour()?.timeIntervalSince1970})?.weather {
+                            AxisValueLabel(centered: false) {
+                                getIcon(id: weather[0].weatherID, icon: weather[0].weatherIcon)
                                 .symbolRenderingMode(.multicolor)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -146,7 +149,9 @@ struct HourlyChartView: View {
                                             let x = value.location.x - geo[frame].origin.x
                                             if let date: Date =  proxy.value(atX: x),
                                                let roundedHour = date.nearestHour() {
-                                                self.viewModel.selectedDate = roundedHour
+                                                if roundedHour <= Date(timeIntervalSince1970: viewModel.data[24].dt) {
+                                                    self.viewModel.selectedDate = roundedHour
+                                                }
                                             }
                                         }
                                     }
@@ -159,42 +164,10 @@ struct HourlyChartView: View {
             .padding()
             .frame(height: 350)
             Spacer()
+        }.onAppear() {
+            viewModel.selectedUnits = selectedUnits
         }
     }
-    
-//    if let selectedDate = viewModel.selectedDate,
-//       let weather = viewModel.data.first(where: {
-//           $0.dt == selectedDate.nearestHour()?.timeIntervalSince1970
-//       }) {
-//        Text(selectedDate.timeIntervalSince1970.formatted("h:mm a"))
-//        HStack {
-//            Text("\(units.handleTemp(val: weather.temp))\(units.handleUnit(UnitsTemp.self))")
-//            getIcon(id: weather.weather[0].weatherID, icon: weather.weather[0].weatherIcon)
-//                .symbolRenderingMode(.multicolor)
-//                .resizable()
-//                .aspectRatio(contentMode: .fit)
-//                .frame(width: 35, height: 35)
-//            
-//        }
-//    } else {
-//        
-//        Text(viewModel.time.formatted(("h:mm a")))
-//            .onReceive(viewModel.clockTimer) { time in
-//                self.viewModel.time = Date.now.timeIntervalSince1970
-//            }
-//        if let weather = viewModel.data.first(where: {
-//            $0.dt == Date(timeIntervalSince1970: viewModel.time).nearestHour()?.timeIntervalSince1970
-//        }) {
-//            HStack {
-//                Text("\(units.handleTemp(val: weather.temp))\(units.handleUnit(UnitsTemp.self))")
-//                getIcon(id: weather.weather[0].weatherID, icon: weather.weather[0].weatherIcon)
-//                    .symbolRenderingMode(.multicolor)
-//                    .resizable()
-//                    .aspectRatio(contentMode: .fit)
-//                    .frame(width: 35, height: 35)
-//            }
-//        }
-//    }
     
     @ViewBuilder
     func selectedChartDisplayInfo() -> some View {
@@ -208,6 +181,7 @@ struct HourlyChartView: View {
         case .temp: tempChartPointContent()
         case .feelsLike: feelsLikeChartPointContent()
         case .humidity: humidityChartPointContent()
+        case .pressure: pressureChartPointContent()
         }
         
     }
@@ -219,14 +193,14 @@ struct HourlyChartView: View {
             RuleMark(x: .value("", selectedDate)).foregroundStyle(.white)
             PointMark (
                 x: .value("", selectedDate),
-                y: .value("", units.handleTemp(val: point))
+                y: .value("", Temperature(point, selectedUnits.temperature).val)
             ).foregroundStyle(.white)
         } else {
             if let date = Date(timeIntervalSince1970: viewModel.time).nearestHour(),
                let point = viewModel.data.first(where: {$0.dt == date.timeIntervalSince1970})?.temp {
                 PointMark (
                     x: .value("", date),
-                    y: .value("", units.handleTemp(val: point))
+                    y: .value("", Temperature(point, selectedUnits.temperature).val)
                 ).foregroundStyle(.white)
             }
         }
@@ -239,14 +213,14 @@ struct HourlyChartView: View {
             RuleMark (x: .value("", selectedDate)).foregroundStyle(.white)
             PointMark (
                 x: .value("", selectedDate),
-                y: .value("", units.handleTemp(val: point))
+                y: .value("", Temperature(point, selectedUnits.temperature).val)
             ).foregroundStyle(.white)
         } else {
             if let date = Date(timeIntervalSince1970: viewModel.time).nearestHour(),
                let point = viewModel.data.first(where: {$0.dt == date.timeIntervalSince1970})?.feels_like {
                 PointMark (
                     x: .value("", date),
-                    y: .value("", units.handleTemp(val: point))
+                    y: .value("", Temperature(point, selectedUnits.temperature).val)
                 ).foregroundStyle(.white)
             }
         }
@@ -272,10 +246,30 @@ struct HourlyChartView: View {
         }
     }
     
+    @ChartContentBuilder
+    func pressureChartPointContent() -> some ChartContent {
+        if let selectedDate = viewModel.selectedDate,
+           let point = viewModel.data.first(where: {$0.dt == selectedDate.timeIntervalSince1970})?.pressure {
+            RuleMark(x: .value("", selectedDate)).foregroundStyle(.white)
+            PointMark (
+                x: .value("", selectedDate),
+                y: .value("", point)
+            ).foregroundStyle(.white)
+        } else {
+            if let date = Date(timeIntervalSince1970: viewModel.time).nearestHour(),
+               let point = viewModel.data.first(where: {$0.dt == date.timeIntervalSince1970})?.pressure {
+                PointMark (
+                    x: .value("", date),
+                    y: .value("", point)
+                ).foregroundStyle(.white)
+            }
+        }
+    }
+    
     func tempChartContent(_ data: Hourly) -> some ChartContent {
         LineMark (
             x: .value("", Date(timeIntervalSince1970: data.dt)),
-            y: .value("", units.handleTemp(val: data.temp))
+            y: .value("", Temperature(data.temp, selectedUnits.temperature).val)
         )
     }
     
@@ -289,17 +283,25 @@ struct HourlyChartView: View {
     func feelsLikeChartContent(_ data: Hourly) -> some ChartContent {
         LineMark (
             x: .value("", Date(timeIntervalSince1970: data.dt)),
-            y: .value("", units.handleTemp(val: data.feels_like))
+            y: .value("", Temperature(data.feels_like, selectedUnits.temperature).val)
+        )
+    }
+    
+    func pressureChartContent(_ data: Hourly) -> some ChartContent {
+        LineMark (
+            x: .value("", Date(timeIntervalSince1970: data.dt)),
+            y: .value("", data.pressure)
         )
     }
       
     func chartYAxisMarks() -> some AxisContent {
-        AxisMarks(values: viewModel.yAxisMarks(self.units)) { value in
+        AxisMarks(values: viewModel.yAxisMarks) { value in
             AxisGridLine()
             switch viewModel.selectedChartDataType {
             case .temp: tempAxisValueLabel(value)
             case .feelsLike: tempAxisValueLabel(value)
             case .humidity: AxisValueLabel(format: Decimal.FormatStyle.Percent.percent.scale(1))
+            case .pressure: AxisValueLabel()
             }
         }
     }
@@ -320,10 +322,9 @@ struct HourlyChartView: View {
         case .temp: Image(systemName: "thermometer.high")
         case .feelsLike: Image(systemName: "thermometer.sun.fill")
         case .humidity: Image(systemName: "humidity.fill")
+        case .pressure: Image(systemName: "gauge.with.dots.needle.bottom.100percent")
         }
     }
-
-    
     
     @ViewBuilder
     func gridIcons(_ index: Int) -> some View {
@@ -336,7 +337,8 @@ struct HourlyChartView: View {
             .frame(width: 30, height: 30)
             let set = ["Rain", "Thunderstorms"]
             if set.contains(weatherData[index].weather[0].weatherMain) {
-                Text("\(units.handlePrecipitation(val: weatherData[index].pop))")
+                
+                Text("\(Precipitation(weatherData[index].pop, selectedUnits.precipitation))")
                     .fontWeight(.heavy)
                     .foregroundStyle(.white)
             } else {
@@ -364,6 +366,7 @@ enum ChartDataType {
     case temp
     case feelsLike
     case humidity
+    case pressure
 }
 
 @Observable
@@ -374,26 +377,39 @@ class ChartModel {
     var clockTimer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     var selectedChartDataType: ChartDataType = .temp
     var selectedDate: Date?
+    var selectedUnits = SelectedUnits()
     
     
     init(data: [Hourly]) {
         self.data = data
     }
     
-    var maxTemp: Double {
-        data.map{$0.temp}.max() ?? 0.0
+    var maxTemp: Temperature {
+        let max = data.map{$0.temp}.max() ?? 0.0
+        return Temperature(max, selectedUnits.temperature)
     }
     
-    var minTemp: Double {
-        data.map{$0.temp}.min() ?? 0.0
+    var minTemp: Temperature {
+        let min = data.map{$0.temp}.min() ?? 0.0
+        return Temperature(min, selectedUnits.temperature)
     }
     
-    var maxFeel: Double {
-        data.map{$0.feels_like}.max() ?? 0.0
+    var maxFeel: Temperature {
+        let maxFeel = data.map{$0.feels_like}.max() ?? 0.0
+        return Temperature(maxFeel, selectedUnits.temperature)
     }
     
-    var minFeel: Double {
-        data.map{$0.feels_like}.min() ?? 0.0
+    var minFeel: Temperature {
+        let minFeel = data.map{$0.feels_like}.min() ?? 0.0
+        return Temperature(minFeel, selectedUnits.temperature)
+    }
+    
+    var maxPressure: Double {
+        data.map{$0.pressure}.max() ?? 0.0
+    }
+    
+    var minPressure: Double {
+        data.map{$0.pressure}.min() ?? 0.0
     }
     
     var maxHummidty: Double {
@@ -405,48 +421,35 @@ class ChartModel {
     }
     
     var maxTime: TimeInterval {
-        data.first?.dt ?? Date.now.timeIntervalSince1970
-    }
-    
-    var minTime: TimeInterval {
         data.last?.dt ?? Date.now.timeIntervalSince1970
     }
     
-    
-    var xAxisMarks: [TimeInterval] {
-        stride(from: minTime, to: maxTime, by: 3600).map{$0}
+    var minTime: TimeInterval {
+        data.first?.dt ?? Date.now.timeIntervalSince1970
     }
-    
-    func yScaleDomain (_ units: Units) -> ClosedRange<Int> {
+
+    var yScaleDomain: ClosedRange<Double> {
         switch selectedChartDataType {
-        case .temp:
-            return  units.handleTemp(val: minTemp-11)...units.handleTemp(val: maxTemp+30)
-        case .feelsLike:
-            return  units.handleTemp(val: minFeel-11)...units.handleTemp(val: maxFeel+30)
-        case .humidity: return 0...101
+        case .temp:      return  (minTemp.val-11)...(maxTemp.val+30)
+        case .feelsLike: return (minFeel.val-11)...(maxFeel.val+30)
+        case .humidity:  return 0...101
+        case .pressure:  return minPressure-25...maxPressure+25
         }
-       
     }
     
-    func yAxisMarks (_ units: Units) -> [Int] {
-        
+    var yAxisMarks: [Double] {
         switch selectedChartDataType {
-            
-        case .temp:
-            return stride(from: units.handleTemp(val: minTemp-11),
-                                  to: units.handleTemp(val: maxTemp+30), by: 8).map{$0}
-        case .feelsLike:
-            return stride(from: units.handleTemp(val: minFeel-11),
-                          to: units.handleTemp(val: maxFeel+30), by: 8).map{$0}
-            
-        case .humidity:
-            return stride(from: 0, to: 101, by: 20).map{$0}
+        case .temp:      return stride(from: (minTemp.val-11), to: (maxTemp.val+30), by: 8).map{$0}
+        case .feelsLike: return stride(from: (minFeel.val-11), to: (maxFeel.val+30), by: 8).map{$0}
+        case .humidity:  return stride(from: 0, to: 101, by: 20).map{$0}
+        case .pressure:  return stride(from: minPressure-25, to: maxPressure+25, by: 15).map{$0}
             
         }
     }
+
 }
 
 #Preview {
     HourlyChartViewPreview(fileName: "SomePlaceDenverTime", cityName: "Some Place", adminArea: "SP")
-        .environment(Units())
+        .environment(SelectedUnits())
 }

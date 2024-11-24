@@ -9,10 +9,10 @@ import SwiftUI
 import Charts
 struct HourlyTileView: View {
     
-    @Environment(Units.self) private var units
-    @State private var model = Model()
+    @Environment(SelectedUnits.self) private var selectedUnits
     @State private var showSheet = false
     private let weatherData: [Hourly]
+
     
     init(weatherData: [Hourly]) {
         self.weatherData = weatherData
@@ -37,12 +37,12 @@ struct HourlyTileView: View {
                 
                 Chart(weatherData[0...12]) { hour in
                     PointMark(x: .value("", hour.dt.formatted("dha")),
-                              y: .value("", units.handleTemp(val: hour.temp)))
+                              y: .value("", Temperature(hour.temp, selectedUnits.temperature).val))
                     .annotation {
-                        Text("\(units.handleTemp(val: hour.temp))")
+                        Text("\(Temperature(hour.temp, selectedUnits.temperature))")
                     }
                     LineMark(x: .value("", hour.dt.formatted("dha")),
-                             y: .value("", units.handleTemp(val: hour.temp)))
+                             y: .value("", Temperature(hour.temp, selectedUnits.temperature).val))
                 }
                 .chartScrollableAxes(.horizontal)
                 .chartYAxis(.hidden)
@@ -69,8 +69,10 @@ struct HourlyTileView: View {
         }
         .onTapGesture(perform: {showSheet = true})
         .sheet(isPresented: $showSheet) {
-            HourlyChartView(weatherData: weatherData, isShowing: $showSheet)
-                .padding(.top)
+            HourlyTempView(weatherData: Array(weatherData[0...24]), selectedUnits: selectedUnits)
+//            HourlyConditionsView(weatherData: weatherData, isShowing: $showSheet)
+//                .environment(selectedUnits)
+//                .padding(.top)
         }
     }
 
@@ -85,7 +87,7 @@ struct HourlyTileView: View {
             .frame(width: 30, height: 30)
             let set = ["Rain", "Thunderstorms"]
             if set.contains(weatherData[index].weather[0].weatherMain) {
-                Text("\(units.handlePrecipitation(val: weatherData[index].pop))")
+                Text("\(Precipitation(weatherData[index].pop))")
                     .fontWeight(.heavy)
                     .foregroundStyle(.white)
             } else {
@@ -95,33 +97,19 @@ struct HourlyTileView: View {
     }
 }
 
-
-extension HourlyTileView {
-    
-    @Observable
-    class Model {
-        
-    }
-}
-
 #Preview {
     struct Preview: View {
-        @State var units = Units()
         @State var weatherData: WeatherData?
         var body: some View {
             VStack {
-                if let weatherData {
-                    HourlyTileView(weatherData: weatherData.hourly)
+                if let hourly = weatherData?.hourly {
+                    HourlyTileView(weatherData: hourly)
                         .foregroundStyle(.white)
                         .frame(height: 250)
                         .padding()
-                        .environment(units)
+                        .environment(SelectedUnits())
                 }
-            }
-            .onAppear() {
-                units.temp = .celsius
-            }
-            .task {
+            }.task {
                 do {
                     weatherData = try readUserFromBundle(fileName: "Houston1")
                 } catch {

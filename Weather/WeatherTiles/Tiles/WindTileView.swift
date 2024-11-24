@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WindTileView: View {
     
-    @Environment(Units.self) var units
+    @Environment(SelectedUnits.self) var selectedUnits
 //    @State private var model: Model
     
     let windSpeed: Double
@@ -46,13 +46,13 @@ struct WindTileView: View {
                         HStack {
                             Text("Speed")
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(units.handleWind(val: windSpeed)) \(units.handleUnit(UnitsSpeed.self))")
+                            Text("\(Speed(windSpeed, selectedUnits.speed))")
                         }
                         Divider()
                         HStack {
                             Text("Gust")
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(units.handleWind(val: windGust)) \(units.handleUnit(UnitsSpeed.self))")
+                            Text("\(Speed(windGust, selectedUnits.speed))")
                         }
                         Divider()
                         HStack {
@@ -158,7 +158,7 @@ extension WindTileView {
                 if let data = weatherData?.current {
                     WindTileView(windSpeed: data.wind_speed, windDirection: data.wind_deg, windGust: data.wind_gust ?? 0.0)
                         .padding()
-                        .environment(Units())
+                        .environment(SelectedUnits())
                 }
             }.task {
                 do {

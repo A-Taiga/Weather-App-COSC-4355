@@ -9,49 +9,47 @@ import SwiftUI
 
 struct UnitsView: View {
     
-    @Binding private var units: Units
+    @Binding private var selectedUnits: SelectedUnits
     
-    init(units: Binding<Units>) {
-        self._units = units
+    init(selectedUnits: Binding<SelectedUnits>) {
+        self._selectedUnits = selectedUnits
     }
     
     var body: some View {
-            VStack {
-                List {
-                    Section("temperature") {
-                        Picker(selection: $units.temp) {
-                            Text("Fahrenheit (°F)").tag(UnitsTemp.fahrenheit)
-                            Text("Celsius (°C)").tag(UnitsTemp.celsius)
-                        } label: {}
-                        .pickerStyle(.inline)
-                    }
-                    Section("Other Units") {
-                        Picker("Wind", selection: $units.wind) {
-                            Text("mph").tag(UnitsSpeed.milesPerHour)
-                            Text("km/h").tag(UnitsSpeed.kilometersPerHour)
-                            Text("m/s").tag(UnitsSpeed.metersPerSecond)
-                            Text("kn").tag(UnitsSpeed.knots)
-                        }
-                        Picker("Precipitation", selection: $units.precipitation) {
-                            Text("in").tag(UnitsPrecipitation.inches)
-                            Text("mm").tag(UnitsPrecipitation.millimeters)
-                            Text("cm").tag(UnitsPrecipitation.centimeter)
-                        }
-                        Picker("Distance", selection: $units.distance) {
-                            Text("mi").tag(UnitsDistance.miles)
-                            Text("km").tag(UnitsDistance.kilometers)
-                        }
-                    }
+        Form {
+            Section(header: Text("Temprature")) {
+                Picker(selection: $selectedUnits.temperature) {
+                    Text("Fahrenheit (°F)").tag(TemperatureUnit.fahrenheit)
+                    Text("Celsius (°C)").tag(TemperatureUnit.celsius)
+                } label: {}
+                .pickerStyle(.inline)
+            }
+            Section(header: Text("Other Units")) {
+                Picker("Wind Speed", selection: $selectedUnits.speed) {
+                    Text("mph").tag(SpeedUnit.milesPerHour)
+                    Text("km/h").tag(SpeedUnit.kilometersPerHour)
+                    Text("m/s").tag(SpeedUnit.metersPerSecond)
+                    Text("kn").tag(SpeedUnit.knots)
+                }
+                Picker("Precipitation", selection: $selectedUnits.precipitation) {
+                    Text("in").tag(PrecipitationUnit.inches)
+                    Text("mm").tag(PrecipitationUnit.millimeters)
+                    Text("cm").tag(PrecipitationUnit.centimeter)
+                }
+                Picker("Distance", selection: $selectedUnits.distance) {
+                    Text("mi").tag(DistanceUnit.miles)
+                    Text("km").tag(DistanceUnit.kilometers)
                 }
             }
-        }
+        }.scrollDisabled(true)
+    }
 }
 
 #Preview {
     struct Preview: View {
-        @State var units = Units()
+        @State var selectedUnits = SelectedUnits()
         var body: some View {
-            UnitsView(units: $units)
+            UnitsView(selectedUnits: $selectedUnits)
         }
     }
     return Preview()

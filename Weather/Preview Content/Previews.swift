@@ -21,7 +21,6 @@ protocol Previewable {
 
 struct WeatherViewPreview: View, Previewable {
     
-    @State var units = Units()
     @State var weatherViewModel = WeatherViewModel()
     
     var fileName: String
@@ -37,14 +36,15 @@ struct WeatherViewPreview: View, Previewable {
     var body: some View {
         VStack {
             WeatherView(for: weatherViewModel)
-                .environment(units)
+                .environment(SelectedUnits())
                 .onAppear {
                     if let data = createDumyModel(fileName: self.fileName,
                                                   locationName: self.cityName,
                                                   adminArea: "OR") {
                         self.weatherViewModel.data = data
-                        if let weatherStyle = self.weatherViewModel.data?.weatherData.current.weather.first {
-                            self.weatherViewModel.locationStyle.setStyle(from: weatherStyle)
+                        if let current = self.weatherViewModel.data?.weatherData.current,
+                           let weather = current.weather.first {
+                            self.weatherViewModel.locationStyle.setStyle(sunset: current.sunset, sunrise: current.sunrise, weather: weather)
                         }
                     }
                 }
@@ -69,7 +69,8 @@ struct LocationListViewPreview: View, Previewable {
     
     var body: some View {
         LocationListView().modelContext(modelContext)
-            .environment(Units())
+            .environment(SelectedUnits())
+            .environment(TimeModel())
             .onAppear {
                 if let data = createDumyModel(fileName: self.fileName, locationName: self.cityName, adminArea: self.adminArea) {
                     modelContext.insert(data)
@@ -97,7 +98,9 @@ struct SavedLocationViewPreview: View, Previewable {
     var body: some View {
         NavigationStack {
             if let id = savedData.first?.id {
-                SavedLocationItemView(for: id).environment(Units())
+                SavedLocationItemView(for: id)
+                    .environment(SelectedUnits())
+                    .environment(TimeModel())
                     .modelContext(modelContext)
                     .frame(height: 100)
                     .padding()
@@ -127,7 +130,7 @@ struct HourlyChartViewPreview: View, Previewable {
     var body: some View {
         VStack {
             if let hourlyData {
-                HourlyChartView(weatherData: hourlyData, isShowing: .constant(true))
+                HourlyConditionsView(weatherData: hourlyData, isShowing: .constant(true))
             }
         }.onAppear {
             if let data = createDumyModel(fileName: self.fileName, locationName: self.cityName, adminArea: self.adminArea) {
@@ -136,3 +139,36 @@ struct HourlyChartViewPreview: View, Previewable {
         }
     }
 }
+
+
+
+struct HoulryTempViewPreview: View, Previewable {
+    
+    @State var hourlyData: [Hourly]?
+    
+    var fileName: String
+    var cityName: String
+    var adminArea: String
+    
+    init(fileName: String, cityName: String, adminArea: String) {
+        self.fileName = fileName
+        self.cityName = cityName
+        self.adminArea = adminArea
+    }
+    
+    var body: some View {
+        VStack {
+            if let hourlyData {
+                HourlyTempView(weatherData: Array(hourlyData[0...24]), selectedUnits: SelectedUnits())
+//                HourlyTempView(viewModel: TemperaturePlotModel(data: Array(hourlyData[0...24]), selectedUnits: SelectedUnits()))
+//                HourlyTempView(viewModel: HummidityPlotModel(data: hourlyData, selectedUnits: SelectedUnits()))
+//                HourlyTempView(viewModel: PressurePlotModel(data: hourlyData, selectedUnits: SelectedUnits()))
+            }
+        }.onAppear {
+            if let data = createDumyModel(fileName: self.fileName, locationName: self.cityName, adminArea: self.adminArea) {
+                self.hourlyData = data.weatherData.hourly
+            }
+        }
+    }
+}
+

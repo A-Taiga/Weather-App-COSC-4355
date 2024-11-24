@@ -15,9 +15,9 @@ struct WeatherData: Codable, Identifiable {
     let timezone: String
     let timezone_offset: Int
     let current: Current
-    let minutely: [Minutely]
-    let hourly: [Hourly]
-    let daily: [Daily]
+    let minutely: [Minutely]?
+    let hourly: [Hourly]?
+    let daily: [Daily]?
     let alerts: [Alert]?
 
     private enum CodingKeys: String, CodingKey {
@@ -62,7 +62,13 @@ struct Minutely: Codable {
     }
 }
 
-struct Hourly: Codable, Identifiable{
+struct Hourly: Codable, Identifiable, Hashable {
+    
+    static func == (lhs: Hourly, rhs: Hourly) -> Bool {
+        return lhs.dt == rhs.dt
+    }
+    
+    
     let id = UUID()
     let dt: TimeInterval
     let temp: Double
@@ -99,6 +105,7 @@ struct Hourly: Codable, Identifiable{
         case snow
         case weather
     }
+    
 }
 
 struct Daily: Codable, Identifiable {
@@ -187,7 +194,7 @@ struct FeelsLike: Codable {
     let morn: Double
 }
 
-struct Rain: Codable {
+struct Rain: Codable, Hashable {
     
     let oneHour: Double? // only uses mm/h
     
@@ -196,7 +203,7 @@ struct Rain: Codable {
     }
 }
 
-struct Snow: Codable {
+struct Snow: Codable, Hashable {
     let oneHour: Double? // only uses mm/h
     
     private enum CodingKeys: String, CodingKey {
@@ -204,7 +211,7 @@ struct Snow: Codable {
     }
 }
 
-struct Weather: Codable {
+struct Weather: Codable, Hashable {
     let weatherID: Int
     let weatherMain: String
     let weatherDescription: String

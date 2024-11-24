@@ -11,8 +11,8 @@ import CoreLocation
 
 
 struct LocationListView: View {
-    
-    @Environment(Units.self) var units
+    @Environment(TimeModel.self) private var timeModel
+    @Environment(SelectedUnits.self) var selectedUnits
     @Environment(\.modelContext) var modelContext
     @Query(sort: \DataModel.listIndex) var savedData: [DataModel]
 
@@ -26,16 +26,20 @@ struct LocationListView: View {
                     ForEach(savedData) { data in
                         SavedLocationItemView(for: data.id)
                             .frame(height: 100)
-                            .environment(units)
+                            .environment(selectedUnits)
+                            .environment(timeModel)
                             .modelContext(modelContext)
                             .listRowSeparator(.hidden)
                             .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
                             .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    modelContext.delete(data)
-                                    try? modelContext.save()
-                                } label: {
-                                    Label("delete", systemImage: "trash")
+                                if !data.isUserLocation {
+                                    Button(role: .destructive) {
+                                        timeModel.deleteTimer(for: data.id)
+                                        modelContext.delete(data)
+                                        try? modelContext.save()
+                                    } label: {
+                                        Label("delete", systemImage: "trash")
+                                    }
                                 }
                             }
                     }
@@ -79,8 +83,14 @@ extension LocationListView {
         if let location = model.selectedLocation {
             ZStack(alignment: .top) {
                 WeatherView(for: location)
-                    .environment(self.units)
+                    .environment(selectedUnits)
                 HStack {
+                    Button {
+                        self.model.isPresented = false
+                    } label: {
+                        Image(systemName: "x.circle.fill")
+                    }.tint(.gray)
+                    Spacer()
                     if !savedData.contains(where: {$0.location == location.location}) {
                         Button {
                             modelContext.insert(location)
@@ -88,13 +98,7 @@ extension LocationListView {
                             model.searchFocused = false
                         } label: {
                             Image(systemName: "plus.circle.fill")
-                        }
-                    }
-                    Spacer()
-                    Button {
-                        self.model.isPresented = false
-                    } label: {
-                        Image(systemName: "x.circle.fill")
+                        }.tint(.green)
                     }
                 }
                 .font(.title)
@@ -124,6 +128,7 @@ extension LocationListView {
         var searchFocused = false
         var selectedLocation: DataModel?
         var isPresented: Bool = false
+        var time = Date.now.timeIntervalSince1970
         
         
         func onDismiss() {
@@ -143,13 +148,10 @@ extension LocationListView {
                         self.selectedLocation = DataModel(location: selectedLocation,
                                                           weatherData: data,
                                                           listIndex: 0)
-                        
-                        
                     }
                 }
             }
         }
-        
     }
 }
 
